@@ -125,3 +125,5 @@
     @apply font-sans;
   }
 }
+canvas { border: none !important; outline: none !important; box-shadow: none !important; }
+

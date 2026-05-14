@@ -248,8 +248,8 @@ export default function PeriodicTable() {
       )}>
         <div
           ref={containerRef}
-          className="relative w-full h-full flex justify-center border-none shadow-none outline-none ring-0"
-          style={{ transformStyle: 'preserve-3d' }}
+          className="relative w-full h-full flex justify-center border-0 border-none shadow-none outline-none ring-0"
+          style={{ transformStyle: 'preserve-3d', border: 'none', outline: 'none' }}
         >
           {/* Internal Center Point for Helix/Sphere */}
           <div className={cn(
