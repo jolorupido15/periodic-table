@@ -10,24 +10,32 @@ type ViewMode = 'table' | 'sphere' | 'helix';
 
 const TAU = Math.PI * 2;
 
+/** Strands wrapping the cylinder (like barrel staves / DNA multiplicity). */
+const HELIX_STRANDS = 4;
+
 function perspectiveFactor(z3d: number): number {
   return 6000 / (6000 + z3d + 1200);
 }
 
-/** DNA-style double helix: even/odd indices are opposite strands (π phase), shared rung index j = ⌊i/2⌋. */
-function doubleHelix3D(
+/**
+ * Cylindrical barrel helix: elements share rungs; each strand is evenly spaced
+ * around the cylinder (0, 2π/K, …). Vertical index j = ⌊i/K⌋, continuous rotation via rot.
+ */
+function barrelHelix3D(
   i: number,
   n: number,
+  nStrands: number,
   R: number,
   pitch: number,
   anglePerRung: number,
   rot: number,
 ): { x: number; y: number; z: number } {
-  const strand = i % 2;
-  const j = Math.floor(i / 2);
-  const nRungs = Math.ceil(n / 2);
+  const strand = i % nStrands;
+  const j = Math.floor(i / nStrands);
+  const nRungs = Math.ceil(n / nStrands);
   const mid = (nRungs - 1) / 2;
-  const theta = j * anglePerRung + strand * Math.PI + rot;
+  const strandAngle = (TAU / nStrands) * strand;
+  const theta = j * anglePerRung + strandAngle + rot;
   return {
     x: R * Math.sin(theta),
     y: (j - mid) * pitch,
@@ -35,50 +43,52 @@ function doubleHelix3D(
   };
 }
 
-function maxProjectedDoubleHelixExtent(
+function maxProjectedBarrelHelixExtent(
   n: number,
+  nStrands: number,
   R: number,
   pitch: number,
   anglePerRung: number,
 ): { maxPx: number; maxPy: number } {
   let maxPx = 0;
   let maxPy = 0;
-  const rotSamples = [0, 0.35, 0.7, 1.05, 1.4, 1.75];
+  const rotSamples = [0, 0.3, 0.6, 0.9, 1.2, 1.5, 1.8];
   for (let i = 0; i < n; i++) {
     for (const rot of rotSamples) {
-      const { x, y, z } = doubleHelix3D(i, n, R, pitch, anglePerRung, rot);
-      const f = perspectiveFactor(z);
-      maxPx = Math.max(maxPx, Math.abs(x * f));
-      maxPy = Math.max(maxPy, Math.abs(y * f));
+      const p = barrelHelix3D(i, n, nStrands, R, pitch, anglePerRung, rot);
+      const f = perspectiveFactor(p.z);
+      maxPx = Math.max(maxPx, Math.abs(p.x * f));
+      maxPy = Math.max(maxPy, Math.abs(p.y * f));
     }
   }
   return { maxPx, maxPy };
 }
 
 /**
- * Size a double helix to the canvas: wide radius (horizontal), pitch for full vertical span of all rungs.
- * anglePerRung fixed from count so ~4.8 turns over all rungs (readable spiral, all 118 elements).
+ * Size helix to canvas: maximize radius (horizontal fill), then pitch (vertical spacing).
+ * ~5.2 full turns around the barrel over all rungs for a clear spiral.
  */
 function fitHelixToCanvas(canvasW: number, canvasH: number, n: number): { R: number; pitch: number; anglePerRung: number } {
-  const nRungs = Math.ceil(n / 2);
-  const anglePerRung = (4.8 * TAU) / Math.max(1, nRungs - 1);
+  const nStrands = HELIX_STRANDS;
+  const nRungs = Math.ceil(n / nStrands);
+  const anglePerRung = (5.2 * TAU) / Math.max(1, nRungs - 1);
 
-  const edgePadding = 92;
-  const projectedCardSlack = 42;
-  const nx = Math.max(72, canvasW / 2 - edgePadding - projectedCardSlack);
-  const ny = Math.max(72, canvasH / 2 - edgePadding - projectedCardSlack);
+  const edgePadding = 84;
+  const projectedCardSlack = 52;
+  const nx = Math.max(76, canvasW / 2 - edgePadding - projectedCardSlack);
+  const ny = Math.max(76, canvasH / 2 - edgePadding - projectedCardSlack);
 
   let best: { R: number; pitch: number; anglePerRung: number } | null = null;
 
-  for (let R = 110; R <= 420; R += 7) {
-    for (let pitch = 5; pitch <= 26; pitch += 0.35) {
-      const { maxPx, maxPy } = maxProjectedDoubleHelixExtent(n, R, pitch, anglePerRung);
+  for (let R = 115; R <= 440; R += 6) {
+    for (let pitch = 5.5; pitch <= 28; pitch += 0.32) {
+      const { maxPx, maxPy } = maxProjectedBarrelHelixExtent(n, nStrands, R, pitch, anglePerRung);
       const ratio = Math.max(maxPx / nx, maxPy / ny);
-      if (ratio <= 0.92) {
+      if (ratio <= 0.9) {
         if (
           !best ||
-          R > best.R + 4 ||
-          (Math.abs(R - best.R) <= 4 && pitch > best.pitch + 0.15)
+          R > best.R + 3 ||
+          (Math.abs(R - best.R) <= 3 && pitch > best.pitch + 0.12)
         ) {
           best = { R, pitch, anglePerRung };
         }
@@ -90,16 +100,16 @@ function fitHelixToCanvas(canvasW: number, canvasH: number, n: number): { R: num
     return best;
   }
 
-  let R = Math.min(320, nx * 0.9);
-  let pitch = Math.min(18, (1.85 * ny) / Math.max(1, nRungs - 1));
-  for (let iter = 0; iter < 56; iter++) {
-    const { maxPx, maxPy } = maxProjectedDoubleHelixExtent(n, R, pitch, anglePerRung);
+  let R = Math.min(340, nx * 0.88);
+  let pitch = Math.min(20, (1.9 * ny) / Math.max(1, nRungs - 1));
+  for (let iter = 0; iter < 58; iter++) {
+    const { maxPx, maxPy } = maxProjectedBarrelHelixExtent(n, nStrands, R, pitch, anglePerRung);
     const ratio = Math.max(maxPx / nx, maxPy / ny);
-    if (ratio <= 0.94) return { R, pitch, anglePerRung };
-    R *= 0.93;
-    pitch *= 0.93;
+    if (ratio <= 0.93) return { R, pitch, anglePerRung };
+    R *= 0.92;
+    pitch *= 0.92;
   }
-  return { R: Math.min(260, nx * 0.85), pitch: 7.5, anglePerRung };
+  return { R: Math.min(270, nx * 0.82), pitch: 8.2, anglePerRung };
 }
 
 const categoryHexColors: Record<string, string> = {
@@ -145,7 +155,7 @@ export default function PeriodicTable() {
   const targetModeRef = useRef<ViewMode>('table');
   const currentModeRef = useRef<ViewMode>('table');
   const requestRef = useRef<number>(0);
-  const helixParamsRef = useRef({ R: 240, pitch: 11, anglePerRung: 0.52 });
+  const helixParamsRef = useRef({ R: 260, pitch: 12, anglePerRung: 0.58 });
 
 
   // Dimensions
@@ -192,7 +202,11 @@ export default function PeriodicTable() {
 
   useEffect(() => {
     const animate = () => {
-      rotationRef.current += 0.005;
+      const helixActive =
+        (!isTransitioning && viewMode === 'helix') ||
+        (isTransitioning &&
+          (currentModeRef.current === 'helix' || targetModeRef.current === 'helix'));
+      rotationRef.current += helixActive ? 0.002 : 0.005;
       const rot = rotationRef.current;
       if (isTransitioning) {
         transitionRef.current = Math.min(transitionRef.current + 0.015, 1);
@@ -217,7 +231,7 @@ export default function PeriodicTable() {
           if (m === 'helix') {
             const n = elements.length;
             const { R, pitch, anglePerRung } = helixParamsRef.current;
-            return doubleHelix3D(i, n, R, pitch, anglePerRung, rot);
+            return barrelHelix3D(i, n, HELIX_STRANDS, R, pitch, anglePerRung, rot);
           }
           return { x: 0, y: 0, z: 0 };
         };
@@ -237,16 +251,23 @@ export default function PeriodicTable() {
         const perspective = perspectiveFactor(z3d);
         const x2d = x3d * perspective;
         const y2d = y3d * perspective;
-        const scale = perspective;
-        
+
+        const helixViz =
+          (!isTransitioning && viewMode === 'helix') ||
+          (isTransitioning &&
+            (currentModeRef.current === 'helix' || targetModeRef.current === 'helix'));
+
+        let scale = perspective;
         let opacity = 1;
+        let filter = '';
+
         if (viewMode !== 'table' || isTransitioning) {
-          const helixBlend =
-            (!isTransitioning && viewMode === 'helix') ||
-            (isTransitioning &&
-              (currentModeRef.current === 'helix' || targetModeRef.current === 'helix'));
-          if (helixBlend) {
-            opacity = Math.max(0.56, Math.min(0.98, 0.72 + (z3d + 260) / 1500 * 0.22));
+          if (helixViz) {
+            const Rc = helixParamsRef.current.R;
+            const depth = Math.max(0, Math.min(1, (z3d + Rc) / (2 * Rc + 1e-6)));
+            opacity = Math.max(0.34, Math.min(1, 0.36 + 0.62 * depth));
+            scale = perspective * (0.78 + 0.38 * depth);
+            filter = `brightness(${0.42 + 0.58 * depth})`;
           } else {
             opacity = 0.4 + (z3d + 500) / 1000 * 0.6;
           }
@@ -256,6 +277,7 @@ export default function PeriodicTable() {
         if (card) {
           card.style.transform = `translate(-50%, -50%) translate3d(${x2d}px, ${y2d}px, 0) scale(${scale})`;
           card.style.opacity = Math.max(0, Math.min(1, opacity)).toString();
+          card.style.filter = filter;
           items.push({ index: i, z3d });
         }
       });
