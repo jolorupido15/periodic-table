@@ -33,7 +33,7 @@ export default function GalaxyBackground() {
         this.moveSpeed = 0.05 + Math.random() * 0.1;
       }
 
-      update(width: number, height: number) {
+      update(width: number) {
         // Twinkle
         this.opacity += this.twinkleSpeed;
         if (this.opacity > 1 || this.opacity < 0.2) {
@@ -62,7 +62,7 @@ export default function GalaxyBackground() {
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       stars.forEach((star) => {
-        star.update(canvas.width, canvas.height);
+        star.update(canvas.width);
         star.draw(ctx);
       });
       animationFrameId = requestAnimationFrame(animate);
