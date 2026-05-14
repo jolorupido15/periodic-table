@@ -67,9 +67,9 @@ export default function PeriodicTable() {
 
   // Pre-calculate base positions/data
   const elementData = useMemo(() => {
-    // Wider spacing and vertical pitch for readability
-    const helixSpacing = 22;
-    const verticalOffset = 250; 
+    // Aggressive spacing for extreme readability
+    const helixSpacing = 45;
+    const verticalOffset = 300;
 
     return elements.map((el, i) => {
       // Table Pos
@@ -83,8 +83,8 @@ export default function PeriodicTable() {
       // Helix Base (Double Strand)
       const strand = i < 59 ? 0 : 1;
       const idx = strand === 0 ? i : i - 59;
-      const helixAngle = (idx / 59) * Math.PI * 4 + (strand === 1 ? Math.PI : 0);
-      
+      const helixAngle = (idx / 59) * Math.PI * 6 + (strand === 1 ? Math.PI : 0);
+
       // Centered Helix Math
       const centeredIdx = idx - 59 / 2;
       const hy = centeredIdx * helixSpacing + verticalOffset;
@@ -137,9 +137,9 @@ export default function PeriodicTable() {
           }
           if (m === 'helix') {
             return {
-              x: Math.cos(helixAngle + rot) * 380,
+              x: Math.cos(helixAngle + rot) * 600,
               y: hy,
-              z: Math.sin(helixAngle + rot) * 380
+              z: Math.sin(helixAngle + rot) * 600
             };
           }
           return { x: 0, y: 0, z: 0 };
@@ -157,7 +157,7 @@ export default function PeriodicTable() {
           x3d = pos.x; y3d = pos.y; z3d = pos.z;
         }
 
-        const perspective = 2500 / (2500 + z3d + 300);
+        const perspective = 3500 / (3500 + z3d + 600);
         const x2d = x3d * perspective;
         const y2d = y3d * perspective;
         const scale = perspective;
@@ -188,37 +188,37 @@ export default function PeriodicTable() {
     <div className="w-full flex flex-col items-center gap-12 py-10 px-4 min-h-screen">
       {/* Controls - Absolute top to prevent layout shifts */}
       <div className="fixed top-10 left-1/2 -translate-x-1/2 flex items-center gap-6 z-[1000] bg-black/40 p-4 rounded-full backdrop-blur-md border border-white/10">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => toggleMode('table')}
           className={cn(
             "rounded-full px-8 py-6 text-sm font-bold border-2 transition-all duration-500 uppercase tracking-widest",
             viewMode === 'table' && !isTransitioning
-              ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
+              ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]"
               : "bg-transparent text-white border-white/20 hover:border-white"
           )}
         >
           TABLE
         </Button>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => toggleMode('sphere')}
           className={cn(
             "rounded-full px-8 py-6 text-sm font-bold border-2 transition-all duration-500 uppercase tracking-widest",
             (viewMode === 'sphere' || (isTransitioning && targetModeRef.current === 'sphere'))
-              ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
+              ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]"
               : "bg-transparent text-white border-white/20 hover:border-white"
           )}
         >
           SPHERE
         </Button>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => toggleMode('helix')}
           className={cn(
             "rounded-full px-8 py-6 text-sm font-bold border-2 transition-all duration-500 uppercase tracking-widest",
             (viewMode === 'helix' || (isTransitioning && targetModeRef.current === 'helix'))
-              ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
+              ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]"
               : "bg-transparent text-white border-white/20 hover:border-white"
           )}
         >
@@ -231,8 +231,8 @@ export default function PeriodicTable() {
         "w-screen h-screen flex items-center justify-center relative overflow-hidden",
         viewMode === 'table' ? "mt-24 h-auto" : "fixed inset-0"
       )}>
-        <div 
-          ref={containerRef} 
+        <div
+          ref={containerRef}
           className="relative w-full h-full flex items-center justify-center"
           style={{ transformStyle: 'preserve-3d' }}
         >
@@ -241,7 +241,7 @@ export default function PeriodicTable() {
             {elements.map((el, i) => {
               const catColor = categoryHexColors[el.category] || '#52525b';
               return (
-                <div 
+                <div
                   key={el.number}
                   ref={el => { cardRefs.current[i] = el; }}
                   className="absolute left-0 top-0 w-[65px] h-[75px] bg-zinc-950/90 border rounded-md cursor-pointer transition-colors duration-300 group overflow-hidden will-change-transform"
@@ -256,7 +256,7 @@ export default function PeriodicTable() {
                     <span className="text-[9px] absolute top-1 right-1.5 opacity-60 text-zinc-400 font-bold">
                       {el.number}
                     </span>
-                    <span 
+                    <span
                       className="text-xl font-black mb-0.5 group-hover:scale-125 transition-transform duration-300"
                       style={{ color: catColor, textShadow: `0 0 10px ${catColor}50` }}
                     >
@@ -288,10 +288,10 @@ export default function PeriodicTable() {
         </div>
       )}
 
-      <ElementDialog 
-        element={selectedElement} 
-        isOpen={isDialogOpen} 
-        onClose={() => setIsDialogOpen(false)} 
+      <ElementDialog
+        element={selectedElement}
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
       />
 
       <style jsx global>{`
