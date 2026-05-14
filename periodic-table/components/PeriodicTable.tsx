@@ -67,9 +67,9 @@ export default function PeriodicTable() {
 
   // Pre-calculate base positions/data
   const elementData = useMemo(() => {
-    // Dynamic spacing based on window height to prevent overflow
-    const helixSpacing = Math.min(13, windowHeight / 100);
-    const verticalOffset = 180; // Significant positive value shifts the structure down
+    // Wider spacing and vertical pitch for readability
+    const helixSpacing = 22;
+    const verticalOffset = 250; 
 
     return elements.map((el, i) => {
       // Table Pos
@@ -137,9 +137,9 @@ export default function PeriodicTable() {
           }
           if (m === 'helix') {
             return {
-              x: Math.cos(helixAngle + rot) * 250,
+              x: Math.cos(helixAngle + rot) * 380,
               y: hy,
-              z: Math.sin(helixAngle + rot) * 250
+              z: Math.sin(helixAngle + rot) * 380
             };
           }
           return { x: 0, y: 0, z: 0 };
@@ -157,7 +157,7 @@ export default function PeriodicTable() {
           x3d = pos.x; y3d = pos.y; z3d = pos.z;
         }
 
-        const perspective = 2200 / (2200 + z3d + 200);
+        const perspective = 2500 / (2500 + z3d + 300);
         const x2d = x3d * perspective;
         const y2d = y3d * perspective;
         const scale = perspective;
