@@ -37,7 +37,7 @@ export default function ElementCard({ element, index, onClick, isSphereMode, sph
       onClick={() => onClick(element)}
       className={cn(
         'relative flex flex-col items-center justify-center p-1.5 border transition-all duration-700 cursor-pointer rounded-sm group select-none hover:-translate-y-1',
-        'animate-in fade-in slide-in-from-bottom-4 fill-mode-forwards opacity-0',
+        'element-entrance',
         !isSphereMode && 'animate-float',
         categoryColors[element.category],
         isSphereMode ? 'absolute w-16 h-20' : 'relative'
@@ -58,7 +58,8 @@ export default function ElementCard({ element, index, onClick, isSphereMode, sph
       </span>
 
       <style jsx>{`
-        .animate-in {
+        .element-entrance {
+          opacity: 0;
           animation: fadeInSlide 0.6s ease-out forwards;
         }
         @keyframes fadeInSlide {

@@ -117,7 +117,7 @@ export default function PeriodicTable() {
             transformStyle: 'preserve-3d'
           } : {
             gridTemplateColumns: 'repeat(18, minmax(0, 1fr))',
-            gridTemplateRows: 'repeat(10, minmax(0, 1fr))',
+            gridTemplateRows: 'repeat(10, auto)',
           }}
         >
           {elements.map((element, index) => (
