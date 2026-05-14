@@ -234,7 +234,9 @@ export default function PeriodicTable() {
               return (
                 <div
                   key={el.number}
-                  ref={el => { cardRefs.current[i] = el; }}
+                  ref={el => {
+                    if (el) cardRefs.current[i] = el;
+                  }}
                   className="absolute left-0 top-0 w-[65px] h-[75px] bg-zinc-950/90 border rounded-md cursor-pointer transition-colors duration-300 group overflow-hidden will-change-transform"
                   onClick={() => handleElementClick(el)}
                   style={{
