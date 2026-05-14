@@ -6,7 +6,7 @@ import GalaxyBackground from '@/components/GalaxyBackground';
 
 export default function Home() {
   return (
-    <main className="relative flex min-h-screen w-full flex-col items-stretch overflow-x-hidden text-zinc-100">
+    <main className="relative flex min-h-dvh w-full flex-col items-stretch overflow-x-hidden text-zinc-100">
       <GalaxyBackground />
       <PeriodicTable />
       <footer className="relative z-10 mt-auto py-8 text-zinc-600 text-sm font-medium tracking-widest uppercase">

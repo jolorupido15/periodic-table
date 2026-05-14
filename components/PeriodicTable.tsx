@@ -41,9 +41,8 @@ export default function PeriodicTable() {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [targetMode, setTargetMode] = useState<ViewMode | null>(null);
-  /** Pixel center of the stage relative to container; locked for 3D so CSS reflow/resize does not drift the sphere. */
+  /** Stage center in CSS px: (clientWidth/2, clientHeight/2). Updated via ResizeObserver in 3D (pivot must not use % transform on a 0×0 box — that resolves to 0). */
   const [stageCenterPx, setStageCenterPx] = useState<{ x: number; y: number } | null>(null);
-  const lockedStageCenterRef = useRef<{ x: number; y: number } | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -192,33 +191,28 @@ export default function PeriodicTable() {
 
   useLayoutEffect(() => {
     if (!needs3DCenter) {
-      lockedStageCenterRef.current = null;
       setStageCenterPx(null);
       return;
     }
 
-    const measure = () => {
-      const el = containerRef.current;
-      if (!el) return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    const sync = () => {
       const w = el.clientWidth;
       const h = el.clientHeight;
       if (w < 1 || h < 1) return;
-      const next = { x: w / 2, y: h / 2 };
-      if (!lockedStageCenterRef.current) {
-        lockedStageCenterRef.current = next;
-        setStageCenterPx(next);
-      }
+      setStageCenterPx({ x: w / 2, y: h / 2 });
     };
 
-    measure();
-    const raf = requestAnimationFrame(() => {
-      requestAnimationFrame(measure);
-    });
-    return () => cancelAnimationFrame(raf);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [needs3DCenter]);
 
   return (
-    <div className="w-full flex flex-col items-stretch px-4 min-h-0 flex-1 self-stretch">
+    <div className="flex min-h-0 w-full flex-1 flex-col items-stretch self-stretch px-4">
       {/* Header & Controls Container */}
       <div className="sticky top-0 left-0 w-full shrink-0 pt-6 pb-2 flex flex-col items-center z-[1001] bg-transparent border-none shadow-none ring-0 outline-none">
         <header className="flex flex-col items-center text-center mb-6 border-none shadow-none ring-0 outline-none">
@@ -280,33 +274,31 @@ export default function PeriodicTable() {
       </div>
     </div>
 
-      {/* Main Content Area — explicit height so %/h-full and locked center stay stable (no animated layout). */}
+      {/* Main: table = fixed height; sphere/helix = grow to fill viewport below header (flex-1). */}
       <div
         className={cn(
-          'w-full relative overflow-hidden flex-1 min-h-0 border-none shadow-none outline-none ring-0',
-          activeMode === 'table' ? 'h-[750px]' : 'h-[min(82vh,880px)]',
+          'relative w-full min-h-0 overflow-hidden border-none shadow-none outline-none ring-0',
+          activeMode === 'table' ? 'h-[750px] shrink-0' : 'min-h-[200px] flex-1',
         )}
       >
         <div
           ref={containerRef}
-          className="relative box-border w-full h-full min-h-0 border-0 border-none shadow-none outline-none ring-0"
+          className="relative box-border h-full min-h-0 w-full border-0 border-none shadow-none outline-none ring-0"
           style={{ transformStyle: 'preserve-3d', border: 'none', outline: 'none' }}
         >
-          {/* Pivot: table uses fixed grid anchor; sphere/helix use one-time measured pixel center. */}
+          {/* Pivot origin = sphere center. No translate on 0×0 box (broken %). Cards use translate(-50%,-50%) for their own size. */}
           <div
             className={cn(
-              'absolute w-0 h-0 border-none shadow-none outline-none ring-0',
-              needs3DCenter
-                ? ''
-                : 'left-1/2 top-[360px] -translate-x-1/2',
+              'absolute h-0 w-0 border-none shadow-none outline-none ring-0',
+              needs3DCenter ? '' : 'left-1/2 top-[360px]',
             )}
             style={
               needs3DCenter
                 ? {
                     transformStyle: 'preserve-3d',
-                    left: stageCenterPx?.x ?? '50%',
-                    top: stageCenterPx?.y ?? '50%',
-                    transform: 'translate(-50%, -50%)',
+                    ...(stageCenterPx
+                      ? { left: stageCenterPx.x, top: stageCenterPx.y }
+                      : { left: '50%', top: '50%' }),
                   }
                 : { transformStyle: 'preserve-3d' }
             }
