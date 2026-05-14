@@ -156,7 +156,12 @@ export default function PeriodicTable() {
   const currentModeRef = useRef<ViewMode>('table');
   const requestRef = useRef<number>(0);
   const helixParamsRef = useRef({ R: 260, pitch: 12, anglePerRung: 0.58 });
-
+  /** Mouse X normalized to [-1, 1] from stage center; 0 when pointer leaves stage. */
+  const pointerNormRef = useRef(0);
+  /** Smoothed spin velocity (rad / frame) from pointer. */
+  const spinVelRef = useRef(0);
+  const hoveredCardIndexRef = useRef<number | null>(null);
+  const hoverScaleAnimRef = useRef<Float32Array | null>(null);
 
   // Dimensions
   const cardW = 65;
@@ -202,11 +207,19 @@ export default function PeriodicTable() {
 
   useEffect(() => {
     const animate = () => {
-      const helixActive =
-        (!isTransitioning && viewMode === 'helix') ||
-        (isTransitioning &&
-          (currentModeRef.current === 'helix' || targetModeRef.current === 'helix'));
-      rotationRef.current += helixActive ? 0.002 : 0.005;
+      const nEl = elements.length;
+      if (!hoverScaleAnimRef.current || hoverScaleAnimRef.current.length !== nEl) {
+        hoverScaleAnimRef.current = new Float32Array(nEl).fill(1);
+      }
+      const hoverScales = hoverScaleAnimRef.current;
+
+      const maxSpin = 0.068;
+      const targetSpin = pointerNormRef.current * maxSpin;
+      spinVelRef.current += (targetSpin - spinVelRef.current) * 0.14;
+      if (Math.abs(pointerNormRef.current) < 0.04) {
+        spinVelRef.current *= 0.94;
+      }
+      rotationRef.current += spinVelRef.current;
       const rot = rotationRef.current;
       if (isTransitioning) {
         transitionRef.current = Math.min(transitionRef.current + 0.015, 1);
@@ -220,7 +233,11 @@ export default function PeriodicTable() {
         let x3d = 0, y3d = 0, z3d = 0;
 
         const getPos = (m: ViewMode) => {
-          if (m === 'table') return { x: tx, y: ty, z: 0 };
+          if (m === 'table') {
+            const c = Math.cos(rot);
+            const s = Math.sin(rot);
+            return { x: tx * c, y: ty, z: -tx * s };
+          }
           if (m === 'sphere') {
             return {
               x: 300 * Math.sin(phi) * Math.cos(theta + rot),
@@ -273,9 +290,13 @@ export default function PeriodicTable() {
           }
         }
 
+        const hoverTarget = hoveredCardIndexRef.current === i ? 1.1 : 1;
+        hoverScales[i] += (hoverTarget - hoverScales[i]) * 0.22;
+
         const card = cardRefs.current[i];
         if (card) {
-          card.style.transform = `translate(-50%, -50%) translate3d(${x2d}px, ${y2d}px, 0) scale(${scale})`;
+          const sOut = scale * hoverScales[i];
+          card.style.transform = `translate(-50%, -50%) translate3d(${x2d}px, ${y2d}px, 0) scale(${sOut})`;
           card.style.opacity = Math.max(0, Math.min(1, opacity)).toString();
           card.style.filter = filter;
           items.push({ index: i, z3d });
@@ -296,6 +317,27 @@ export default function PeriodicTable() {
   }, [viewMode, isTransitioning, elementData]);
 
   const activeMode = targetMode || viewMode;
+
+  useLayoutEffect(() => {
+    const root = containerRef.current;
+    if (!root) return;
+
+    const onMove = (e: MouseEvent) => {
+      const r = root.getBoundingClientRect();
+      const half = Math.max(1, r.width / 2);
+      pointerNormRef.current = Math.max(-1, Math.min(1, (e.clientX - r.left - r.width / 2) / half));
+    };
+    const onLeave = () => {
+      pointerNormRef.current = 0;
+    };
+
+    root.addEventListener('mousemove', onMove);
+    root.addEventListener('mouseleave', onLeave);
+    return () => {
+      root.removeEventListener('mousemove', onMove);
+      root.removeEventListener('mouseleave', onLeave);
+    };
+  }, [activeMode, viewMode]);
 
   const needs3DCenter =
     activeMode === 'sphere' ||
@@ -428,6 +470,12 @@ export default function PeriodicTable() {
                     if (el) cardRefs.current[i] = el;
                   }}
                   className="absolute left-0 top-0 w-[65px] h-[75px] bg-zinc-950/90 border rounded-md cursor-pointer transition-colors duration-300 group overflow-hidden will-change-transform"
+                  onMouseEnter={() => {
+                    hoveredCardIndexRef.current = i;
+                  }}
+                  onMouseLeave={() => {
+                    if (hoveredCardIndexRef.current === i) hoveredCardIndexRef.current = null;
+                  }}
                   onClick={() => handleElementClick(el)}
                   style={{
                     borderColor: `${catColor}80`,
