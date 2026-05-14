@@ -177,9 +177,20 @@ export default function PeriodicTable() {
   }, [viewMode, isTransitioning, elementData]);
 
   return (
-    <div className="w-full flex flex-col items-center gap-12 py-10 px-4 min-h-screen">
-      {/* Controls - Absolute top to prevent layout shifts */}
-      <div className="fixed top-10 left-1/2 -translate-x-1/2 flex items-center gap-6 z-[1000] bg-black/40 p-4 rounded-full backdrop-blur-md border border-white/10">
+    <div className="w-full flex flex-col items-center px-4 min-h-screen">
+      {/* Header & Controls Container */}
+      <div className={cn(
+        "z-[1000] flex flex-col items-center transition-all duration-1000",
+        viewMode === 'table' ? "relative mt-12 mb-4" : "fixed top-8 left-1/2 -translate-x-1/2 w-full"
+      )}>
+        <header className="flex flex-col items-center text-center mb-6">
+          <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] mb-2">
+            Periodic Table
+          </h1>
+          <div className="h-1 w-20 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full" />
+        </header>
+
+        <div className="flex items-center gap-4 bg-black/40 p-2 rounded-full backdrop-blur-md border border-white/10">
         <Button
           variant="outline"
           onClick={() => toggleMode('table')}
@@ -217,15 +228,19 @@ export default function PeriodicTable() {
           HELIX
         </Button>
       </div>
+    </div>
 
-      {/* Main Content Area - Full Viewport Centered */}
+      {/* Main Content Area */}
       <div className={cn(
         "w-full relative overflow-hidden transition-all duration-700",
-        viewMode === 'table' ? "mt-32 h-[900px]" : "fixed inset-0 h-screen"
+        viewMode === 'table' ? "h-[850px]" : "fixed inset-0 h-screen"
       )}>
         <div
           ref={containerRef}
-          className="relative w-full h-full flex items-center justify-center"
+          className={cn(
+            "relative w-full h-full flex justify-center",
+            viewMode === 'table' ? "items-start pt-[380px]" : "items-center"
+          )}
           style={{ transformStyle: 'preserve-3d' }}
         >
           {/* Internal Center Point for Helix/Sphere */}
