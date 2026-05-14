@@ -17,6 +17,21 @@ function perspectiveFactor(z3d: number): number {
   return 6000 / (6000 + z3d + 1200);
 }
 
+/** Rotate point around +X (mouse up/down tilts the 3D scene). */
+function rotateX(x: number, y: number, z: number, angle: number): { x: number; y: number; z: number } {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  return { x, y: y * c - z * s, z: y * s + z * c };
+}
+
+/** Bright category-colored outer glow without oversized blur on the card face. */
+function categoryCardGlowStyle(hex: string): { borderColor: string; boxShadow: string } {
+  return {
+    borderColor: `${hex}dd`,
+    boxShadow: `0 0 0 1px ${hex}66, 0 0 12px ${hex}ee, 0 0 22px ${hex}aa, 0 0 36px ${hex}55, 0 5px 18px rgba(0,0,0,0.65)`,
+  };
+}
+
 /**
  * Cylindrical barrel helix: elements share rungs; each strand is evenly spaced
  * around the cylinder (0, 2π/K, …). Vertical index j = ⌊i/K⌋, continuous rotation via rot.
@@ -158,8 +173,12 @@ export default function PeriodicTable() {
   const helixParamsRef = useRef({ R: 260, pitch: 12, anglePerRung: 0.58 });
   /** Mouse X normalized to [-1, 1] from stage center; 0 when pointer leaves stage. */
   const pointerNormRef = useRef(0);
+  /** +1 = pointer above stage center (mouse “up”). */
+  const pointerYNormRef = useRef(0);
   /** Smoothed spin velocity (rad / frame) from pointer. */
   const spinVelRef = useRef(0);
+  const pitchVelRef = useRef(0);
+  const pitchRef = useRef(0);
   const hoveredCardIndexRef = useRef<number | null>(null);
   const hoverScaleAnimRef = useRef<Float32Array | null>(null);
 
@@ -213,14 +232,27 @@ export default function PeriodicTable() {
       }
       const hoverScales = hoverScaleAnimRef.current;
 
-      const maxSpin = 0.068;
-      const targetSpin = pointerNormRef.current * maxSpin;
-      spinVelRef.current += (targetSpin - spinVelRef.current) * 0.14;
-      if (Math.abs(pointerNormRef.current) < 0.04) {
-        spinVelRef.current *= 0.94;
+      const tableLocked = viewMode === 'table' && !isTransitioning;
+      if (!tableLocked) {
+        const maxSpin = 0.068;
+        const targetSpin = pointerNormRef.current * maxSpin;
+        spinVelRef.current += (targetSpin - spinVelRef.current) * 0.14;
+        if (Math.abs(pointerNormRef.current) < 0.04) {
+          spinVelRef.current *= 0.94;
+        }
+        rotationRef.current += spinVelRef.current;
+
+        const maxPitch = 0.052;
+        const targetPitch = pointerYNormRef.current * maxPitch;
+        pitchVelRef.current += (targetPitch - pitchVelRef.current) * 0.14;
+        if (Math.abs(pointerYNormRef.current) < 0.04) {
+          pitchVelRef.current *= 0.94;
+        }
+        pitchRef.current += pitchVelRef.current;
       }
-      rotationRef.current += spinVelRef.current;
+
       const rot = rotationRef.current;
+      const pitchAngle = pitchRef.current;
       if (isTransitioning) {
         transitionRef.current = Math.min(transitionRef.current + 0.015, 1);
       }
@@ -234,21 +266,19 @@ export default function PeriodicTable() {
 
         const getPos = (m: ViewMode) => {
           if (m === 'table') {
-            const c = Math.cos(rot);
-            const s = Math.sin(rot);
-            return { x: tx * c, y: ty, z: -tx * s };
+            return { x: tx, y: ty, z: 0 };
           }
           if (m === 'sphere') {
-            return {
-              x: 300 * Math.sin(phi) * Math.cos(theta + rot),
-              y: 300 * Math.cos(phi),
-              z: 300 * Math.sin(phi) * Math.sin(theta + rot)
-            };
+            const bx = 300 * Math.sin(phi) * Math.cos(theta + rot);
+            const by = 300 * Math.cos(phi);
+            const bz = 300 * Math.sin(phi) * Math.sin(theta + rot);
+            return rotateX(bx, by, bz, pitchAngle);
           }
           if (m === 'helix') {
             const n = elements.length;
             const { R, pitch, anglePerRung } = helixParamsRef.current;
-            return barrelHelix3D(i, n, HELIX_STRANDS, R, pitch, anglePerRung, rot);
+            const p = barrelHelix3D(i, n, HELIX_STRANDS, R, pitch, anglePerRung, rot);
+            return rotateX(p.x, p.y, p.z, pitchAngle);
           }
           return { x: 0, y: 0, z: 0 };
         };
@@ -325,10 +355,16 @@ export default function PeriodicTable() {
     const onMove = (e: MouseEvent) => {
       const r = root.getBoundingClientRect();
       const half = Math.max(1, r.width / 2);
+      const halfH = Math.max(1, r.height / 2);
       pointerNormRef.current = Math.max(-1, Math.min(1, (e.clientX - r.left - r.width / 2) / half));
+      pointerYNormRef.current = Math.max(
+        -1,
+        Math.min(1, (r.top + r.height / 2 - e.clientY) / halfH),
+      );
     };
     const onLeave = () => {
       pointerNormRef.current = 0;
+      pointerYNormRef.current = 0;
     };
 
     root.addEventListener('mousemove', onMove);
@@ -463,13 +499,14 @@ export default function PeriodicTable() {
           >
             {elements.map((el, i) => {
               const catColor = categoryHexColors[el.category] || '#52525b';
+              const glow = categoryCardGlowStyle(catColor);
               return (
                 <div
                   key={el.number}
                   ref={el => {
                     if (el) cardRefs.current[i] = el;
                   }}
-                  className="absolute left-0 top-0 w-[65px] h-[75px] bg-zinc-950/90 border rounded-md cursor-pointer transition-colors duration-300 group overflow-hidden will-change-transform"
+                  className="absolute left-0 top-0 w-[65px] h-[75px] border-2 rounded-md cursor-pointer transition-colors duration-300 group overflow-hidden will-change-transform bg-zinc-950/95"
                   onMouseEnter={() => {
                     hoveredCardIndexRef.current = i;
                   }}
@@ -478,26 +515,37 @@ export default function PeriodicTable() {
                   }}
                   onClick={() => handleElementClick(el)}
                   style={{
-                    borderColor: `${catColor}80`,
-                    boxShadow: `0 0 15px ${catColor}40`,
+                    ...glow,
                     transform: 'translate(-50%, -50%)',
                   } as React.CSSProperties}
                 >
-                  <div className="flex flex-col items-center justify-center h-full relative p-1 text-center">
-                    <span className="text-[9px] absolute top-1 right-1.5 opacity-60 text-zinc-400 font-bold">
+                  <div className="relative z-[1] flex h-full flex-col items-center justify-center p-1 text-center">
+                    <span
+                      className="absolute right-1.5 top-1 text-[9px] font-bold text-zinc-200"
+                      style={{ textShadow: '0 0 6px rgba(0,0,0,0.95), 0 1px 2px #000' }}
+                    >
                       {el.number}
                     </span>
                     <span
-                      className="text-xl font-black mb-0.5 group-hover:scale-125 transition-transform duration-300"
-                      style={{ color: catColor, textShadow: `0 0 10px ${catColor}50` }}
+                      className="mb-0.5 text-xl font-black transition-transform duration-300 group-hover:scale-125"
+                      style={{
+                        color: catColor,
+                        textShadow: `0 0 14px ${catColor}dd, 0 0 3px #000, 0 1px 4px #000`,
+                      }}
                     >
                       {el.symbol}
                     </span>
-                    <span className="text-[7px] uppercase font-bold tracking-tighter text-zinc-500 truncate w-full px-0.5">
+                    <span
+                      className="w-full truncate px-0.5 text-[7px] font-bold uppercase tracking-tighter text-zinc-200"
+                      style={{ textShadow: '0 0 6px rgba(0,0,0,0.95), 0 1px 2px #000' }}
+                    >
                       {el.name}
                     </span>
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 opacity-50" style={{ backgroundColor: catColor }} />
+                  <div
+                    className="absolute bottom-0 left-0 right-0 z-[1] h-0.5 opacity-70"
+                    style={{ backgroundColor: catColor }}
+                  />
                 </div>
               );
             })}
