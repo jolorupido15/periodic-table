@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { elements, Element, ElementCategory } from '@/lib/elements';
 import ElementCard from './ElementCard';
 import ElementDialog from './ElementDialog';
+import ThreeSphere from './ThreeSphere';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -24,48 +25,10 @@ export default function PeriodicTable() {
   const [selectedElement, setSelectedElement] = useState<Element | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSphereMode, setIsSphereMode] = useState(false);
-  const [rotation, setRotation] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    if (!isSphereMode) return;
-
-    let animationFrameId: number;
-    const animate = () => {
-      setRotation(prev => ({
-        x: prev.x + 0.1,
-        y: prev.y + 0.2
-      }));
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    animate();
-    return () => cancelAnimationFrame(animationFrameId);
-  }, [isSphereMode]);
 
   const handleElementClick = (element: Element) => {
     setSelectedElement(element);
     setIsDialogOpen(true);
-  };
-
-  const getSphereStyle = (index: number): React.CSSProperties => {
-    const total = elements.length;
-    const phi = Math.acos(-1 + (2 * index) / total);
-    const theta = Math.sqrt(total * Math.PI) * phi;
-
-    const radius = 400; // Sphere radius in pixels
-
-    return {
-      transform: `
-        rotateY(${theta}rad) 
-        rotateX(${phi}rad) 
-        translateZ(${radius}px)
-      `,
-      position: 'absolute',
-      left: '50%',
-      top: '50%',
-      marginLeft: '-32px', // half width
-      marginTop: '-40px', // half height
-    };
   };
 
   return (
@@ -78,7 +41,7 @@ export default function PeriodicTable() {
           className={cn(
             "rounded-full px-8 py-6 text-lg font-bold border-2 transition-all duration-500",
             isSphereMode 
-              ? "bg-white text-black hover:bg-zinc-200 border-white scale-110" 
+              ? "bg-white text-black hover:bg-zinc-200 border-white scale-110 shadow-[0_0_20px_rgba(255,255,255,0.4)]" 
               : "bg-transparent text-white border-white/20 hover:border-white"
           )}
         >
@@ -102,35 +65,32 @@ export default function PeriodicTable() {
 
       {/* Grid Container / Sphere Stage */}
       <div className={cn(
-        "w-full transition-all duration-1000 flex items-center justify-center",
-        isSphereMode ? "h-[800px] perspective-[1500px]" : "overflow-x-auto pb-6"
+        "w-full transition-all duration-1000 flex items-center justify-center min-h-[600px]",
+        isSphereMode ? "h-[800px]" : "overflow-x-auto pb-6"
       )}>
-        <div 
-          className={cn(
-            "transition-all duration-1000",
-            isSphereMode 
-              ? "relative w-full h-full transform-style-3d" 
-              : "grid gap-1.5 mx-auto min-w-[1000px] max-w-[1400px]"
-          )}
-          style={isSphereMode ? {
-            transform: `rotateX(${rotation.x * 0.1}deg) rotateY(${rotation.y}deg)`,
-            transformStyle: 'preserve-3d'
-          } : {
-            gridTemplateColumns: 'repeat(18, minmax(0, 1fr))',
-            gridTemplateRows: 'repeat(10, auto)',
-          }}
-        >
-          {elements.map((element, index) => (
-            <ElementCard 
-              key={element.number} 
-              element={element} 
-              index={index}
-              onClick={handleElementClick} 
-              isSphereMode={isSphereMode}
-              sphereStyle={getSphereStyle(index)}
-            />
-          ))}
-        </div>
+        {isSphereMode ? (
+          <div className="w-full h-full animate-in fade-in duration-1000">
+            <ThreeSphere onElementClick={handleElementClick} />
+          </div>
+        ) : (
+          <div 
+            className="grid gap-1.5 mx-auto min-w-[1000px] max-w-[1400px]"
+            style={{
+              gridTemplateColumns: 'repeat(18, minmax(0, 1fr))',
+              gridTemplateRows: 'repeat(10, auto)',
+            }}
+          >
+            {elements.map((element, index) => (
+              <ElementCard 
+                key={element.number} 
+                element={element} 
+                index={index}
+                onClick={handleElementClick} 
+                isSphereMode={false}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <ElementDialog 
@@ -140,12 +100,6 @@ export default function PeriodicTable() {
       />
 
       <style jsx global>{`
-        .perspective-[1500px] {
-          perspective: 1500px;
-        }
-        .transform-style-3d {
-          transform-style: preserve-3d;
-        }
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }
