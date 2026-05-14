@@ -86,36 +86,42 @@ export default function PeriodicTable() {
             {elements.map((el, i) => {
               const phi = Math.acos(1 - 2 * (i + 0.5) / 118);
               const theta = Math.PI * (1 + Math.sqrt(5)) * i;
-              const x = 320 * Math.sin(phi) * Math.cos(theta);
-              const y = 320 * Math.sin(phi) * Math.sin(theta);
-              const z = 320 * Math.cos(phi);
+              const x = 300 * Math.sin(phi) * Math.cos(theta);
+              const y = 300 * Math.sin(phi) * Math.sin(theta);
+              const z = 300 * Math.cos(phi);
               
               const catColor = categoryHexColors[el.category] || '#52525b';
 
               return (
                 <div 
                   key={el.number}
-                  className="sphere-card group"
-                  onClick={() => handleElementClick(el)}
+                  className="sphere-wrapper"
                   style={{
-                    transform: `translate3d(${x}px, ${y}px, ${z}px) rotateY(${-theta * 180 / Math.PI}deg) rotateX(${-phi * 180 / Math.PI}deg)`,
-                    border: `1px solid ${catColor}70`,
-                    boxShadow: `0 0 15px ${catColor}50`,
+                    transform: `translate3d(${x}px, ${y}px, ${z}px)`,
                   } as React.CSSProperties}
                 >
-                  <div className="flex flex-col items-center justify-center h-full relative text-center">
-                    <span className="text-[8px] absolute top-1 left-0 right-0 opacity-70 text-white text-center">
-                      {el.number}
-                    </span>
-                    <span 
-                      className="text-[18px] font-bold leading-tight transition-all duration-300 group-hover:scale-125"
-                      style={{ color: catColor, textShadow: `0 0 10px ${catColor}` }}
-                    >
-                      {el.symbol}
-                    </span>
-                    <span className="text-[8px] uppercase tracking-tighter text-zinc-400 font-bold truncate w-full px-1 text-center">
-                      {el.name}
-                    </span>
+                  <div 
+                    className="sphere-card group"
+                    onClick={() => handleElementClick(el)}
+                    style={{
+                      border: `1px solid ${catColor}90`,
+                      boxShadow: `0 0 15px ${catColor}60`,
+                    } as React.CSSProperties}
+                  >
+                    <div className="flex flex-col items-center justify-center h-full relative p-1">
+                      <span className="text-[8px] absolute top-1 right-1 opacity-70 text-zinc-400">
+                        {el.number}
+                      </span>
+                      <span 
+                        className="text-[20px] font-bold transition-all duration-300 group-hover:scale-125"
+                        style={{ color: catColor, textShadow: `0 0 10px ${catColor}` }}
+                      >
+                        {el.symbol}
+                      </span>
+                      <span className="text-[7px] uppercase tracking-widest text-white mt-1 opacity-90 truncate w-full text-center px-0.5">
+                        {el.name}
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
@@ -155,34 +161,43 @@ export default function PeriodicTable() {
           height: 700px;
           margin: auto;
           transform-style: preserve-3d;
-          animation: rotateSphere 40s linear infinite;
+          animation: rotateSphere 25s linear infinite;
+        }
+
+        .sphere-wrapper {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform-style: preserve-3d;
         }
 
         .sphere-card {
-          position: absolute;
-          width: 60px;
+          width: 65px;
           height: 75px;
-          left: 50%;
-          top: 50%;
-          margin-left: -30px;
+          margin-left: -32.5px;
           margin-top: -37.5px;
-          background: rgba(10, 10, 10, 0.85);
+          background: rgba(10, 10, 10, 0.9);
           border-radius: 4px;
           cursor: pointer;
-          transition: all 0.5s ease;
-          backface-visibility: visible;
-          transform-style: preserve-3d;
+          transition: all 0.3s ease;
+          backface-visibility: hidden;
+          animation: counterRotate 25s linear infinite;
         }
 
         .sphere-card:hover {
           background: rgba(20, 20, 20, 1);
           z-index: 100;
-          scale: 1.2;
+          scale: 1.1;
         }
 
         @keyframes rotateSphere {
-          from { transform: rotateY(0deg) rotateX(10deg); }
-          to { transform: rotateY(360deg) rotateX(10deg); }
+          from { transform: rotateY(0deg); }
+          to { transform: rotateY(360deg); }
+        }
+
+        @keyframes counterRotate {
+          from { transform: rotateY(0deg); }
+          to { transform: rotateY(-360deg); }
         }
 
         .scrollbar-hide::-webkit-scrollbar {
