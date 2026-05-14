@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { elements, Element, ElementCategory } from '@/lib/elements';
+import ElementCard from './ElementCard';
 import ElementDialog from './ElementDialog';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -38,24 +39,23 @@ export default function PeriodicTable() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSphereMode, setIsSphereMode] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [fadeState, setFadeState] = useState<'in' | 'out'>('in');
 
   const toggleMode = () => {
+    setFadeState('out');
     setIsTransitioning(true);
-    setIsSphereMode(!isSphereMode);
-    setTimeout(() => setIsTransitioning(false), 850);
+    
+    setTimeout(() => {
+      setIsSphereMode(!isSphereMode);
+      setFadeState('in');
+      setIsTransitioning(false);
+    }, 300);
   };
 
   const handleElementClick = (element: Element) => {
     setSelectedElement(element);
     setIsDialogOpen(true);
   };
-
-  // Grid Constants
-  const cardWidth = 60;
-  const cardHeight = 75;
-  const gap = 6;
-  const gridWidth = 18 * (cardWidth + gap);
-  const gridHeight = 10 * (cardHeight + gap);
 
   return (
     <div className="w-full flex flex-col items-center gap-8 py-10 px-4 md:px-8">
@@ -76,94 +76,95 @@ export default function PeriodicTable() {
         </Button>
       </div>
 
-      {/* Legend - Fade out in sphere mode */}
+      {/* Main Content Area */}
       <div className={cn(
-        "flex flex-wrap justify-center gap-3 md:gap-6 bg-zinc-900/40 p-4 rounded-xl border border-zinc-800/50 backdrop-blur-sm transition-all duration-1000",
-        isSphereMode ? "opacity-0 pointer-events-none -translate-y-4" : "opacity-100"
+        "w-full transition-all duration-500 ease-in-out",
+        fadeState === 'out' ? "opacity-0 scale-95 blur-sm" : "opacity-100 scale-100 blur-0"
       )}>
-        {categories.map((cat) => (
-          <div key={cat.value} className="flex items-center gap-2">
-            <div className={cn("w-3 h-3 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.2)]", cat.color)} />
-            <span className="text-[10px] md:text-xs font-medium text-zinc-400 uppercase tracking-tight">
-              {cat.label}
-            </span>
-          </div>
-        ))}
-      </div>
+        {isSphereMode ? (
+          <div className="sphere-stage perspective-[2000px]">
+            <div className="sphere-container">
+              {elements.map((el, i) => {
+                const phi = Math.acos(1 - 2 * (i + 0.5) / 118);
+                const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+                const x = 300 * Math.sin(phi) * Math.cos(theta);
+                const y = 300 * Math.sin(phi) * Math.sin(theta);
+                const z = 300 * Math.cos(phi);
+                
+                const catColor = categoryHexColors[el.category] || '#52525b';
 
-      {/* Main Stage */}
-      <div className={cn(
-        "relative transition-all duration-1000 flex items-center justify-center",
-        isSphereMode ? "w-full h-[800px] perspective-[2000px]" : "w-full min-h-[850px] overflow-x-auto pb-6"
-      )}>
-        <div className={cn(
-          "relative transition-all duration-1000",
-          isSphereMode ? "sphere-container" : "table-container"
-        )}
-        style={!isSphereMode ? {
-          width: `${gridWidth}px`,
-          height: `${gridHeight}px`,
-        } : {}}
-        >
-          {elements.map((el, i) => {
-            // Sphere calculation
-            const phi = Math.acos(1 - 2 * (i + 0.5) / 118);
-            const theta = Math.PI * (1 + Math.sqrt(5)) * i;
-            const sx = 300 * Math.sin(phi) * Math.cos(theta);
-            const sy = 300 * Math.sin(phi) * Math.sin(theta);
-            const sz = 300 * Math.cos(phi);
-
-            // Table calculation
-            const tx = (el.xpos - 1) * (cardWidth + gap) - gridWidth / 2 + cardWidth / 2;
-            const ty = (el.ypos - 1) * (cardHeight + gap) - gridHeight / 2 + cardHeight / 2;
-            
-            const catColor = categoryHexColors[el.category] || '#52525b';
-
-            return (
-              <div 
-                key={el.number}
-                className="element-wrapper"
-                style={{
-                  transform: isSphereMode 
-                    ? `translate3d(${sx}px, ${sy}px, ${sz}px)` 
-                    : `translate3d(${tx}px, ${ty}px, 0px)`,
-                  transitionDelay: `${i * 5}ms`,
-                  zIndex: isSphereMode ? Math.round(sz + 300) : 10,
-                } as React.CSSProperties}
-              >
-                <div 
-                  className={cn(
-                    "sphere-card group transition-all duration-800 cubic-bezier(0.4, 0, 0.2, 1)",
-                    isSphereMode && "is-sphere"
-                  )}
-                  onClick={() => handleElementClick(el)}
-                  style={{
-                    border: `1px solid ${catColor}90`,
-                    boxShadow: isSphereMode ? `0 0 15px ${catColor}60` : 'none',
-                    opacity: isSphereMode ? 1 : 0.95,
-                    transform: isSphereMode ? 'scale(1)' : 'scale(1)',
-                    transitionDelay: `${i * 5}ms`,
-                  } as React.CSSProperties}
-                >
-                  <div className="flex flex-col items-center justify-center h-full relative p-1">
-                    <span className="text-[8px] absolute top-1 right-1 opacity-70 text-zinc-400">
-                      {el.number}
-                    </span>
-                    <span 
-                      className="text-[20px] font-bold transition-all duration-300 group-hover:scale-125"
-                      style={{ color: catColor, textShadow: `0 0 10px ${catColor}` }}
+                return (
+                  <div 
+                    key={el.number}
+                    className="sphere-card-wrapper"
+                    style={{
+                      transform: `translate3d(${x}px, ${y}px, ${z}px) rotateY(${theta}rad) rotateX(${phi - Math.PI / 2}rad)`,
+                    } as React.CSSProperties}
+                  >
+                    <div 
+                      className="sphere-card group"
+                      onClick={() => handleElementClick(el)}
+                      style={{
+                        border: `1px solid ${catColor}90`,
+                        boxShadow: `0 0 15px ${catColor}60`,
+                      } as React.CSSProperties}
                     >
-                      {el.symbol}
-                    </span>
-                    <span className="text-[7px] uppercase tracking-widest text-white mt-1 opacity-90 truncate w-full text-center px-0.5">
-                      {el.name}
-                    </span>
+                      <div className="flex flex-col items-center justify-center h-full relative p-1 text-center">
+                        <span className="text-[8px] absolute top-1 right-1 opacity-70 text-zinc-400">
+                          {el.number}
+                        </span>
+                        <span 
+                          className="text-[18px] font-bold transition-all duration-300 group-hover:scale-125"
+                          style={{ color: catColor, textShadow: `0_0_10px_${catColor}` }}
+                        >
+                          {el.symbol}
+                        </span>
+                        <span className="text-[7px] uppercase tracking-widest text-white mt-1 opacity-90 truncate w-full px-0.5">
+                          {el.name}
+                        </span>
+                      </div>
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="table-stage flex flex-col items-center gap-8 animate-in fade-in duration-500">
+            {/* Legend */}
+            <div className="flex flex-wrap justify-center gap-3 md:gap-6 bg-zinc-900/40 p-4 rounded-xl border border-zinc-800/50 backdrop-blur-sm">
+              {categories.map((cat) => (
+                <div key={cat.value} className="flex items-center gap-2">
+                  <div className={cn("w-3 h-3 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.2)]", cat.color)} />
+                  <span className="text-[10px] md:text-xs font-medium text-zinc-400 uppercase tracking-tight">
+                    {cat.label}
+                  </span>
                 </div>
+              ))}
+            </div>
+
+            {/* Grid */}
+            <div className="overflow-x-auto w-full pb-6 scrollbar-hide">
+              <div 
+                className="grid gap-1.5 mx-auto min-w-[1000px] max-w-[1400px]"
+                style={{
+                  gridTemplateColumns: 'repeat(18, minmax(0, 1fr))',
+                  gridTemplateRows: 'repeat(10, auto)',
+                }}
+              >
+                {elements.map((element, index) => (
+                  <ElementCard 
+                    key={element.number} 
+                    element={element} 
+                    index={index}
+                    onClick={handleElementClick} 
+                    isSphereMode={false}
+                  />
+                ))}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <ElementDialog 
@@ -173,25 +174,29 @@ export default function PeriodicTable() {
       />
 
       <style jsx global>{`
+        .sphere-stage {
+          width: 100%;
+          height: 800px;
+          display: flex;
+          align-items: center;
+          justify-center;
+          transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
         .sphere-container {
           position: relative;
-          width: 100%;
-          height: 100%;
+          width: 700px;
+          height: 700px;
           transform-style: preserve-3d;
-          animation: rotateSphere 25s linear infinite;
+          animation: rotateSphere 30s linear infinite;
         }
 
-        .table-container {
-          position: relative;
-          transform-style: preserve-3d;
-        }
-
-        .element-wrapper {
+        .sphere-card-wrapper {
           position: absolute;
           left: 50%;
           top: 50%;
           transform-style: preserve-3d;
-          transition: transform 800ms cubic-bezier(0.4, 0, 0.2, 1);
+          backface-visibility: visible;
         }
 
         .sphere-card {
@@ -202,15 +207,8 @@ export default function PeriodicTable() {
           background: rgba(10, 10, 10, 0.9);
           border-radius: 4px;
           cursor: pointer;
-          transition: transform 800ms cubic-bezier(0.4, 0, 0.2, 1), 
-                      opacity 800ms ease, 
-                      box-shadow 800ms ease,
-                      background 300ms ease;
-          backface-visibility: hidden;
-        }
-
-        .sphere-card.is-sphere {
-          animation: counterRotate 25s linear infinite;
+          transition: all 0.3s ease;
+          transform-style: preserve-3d;
         }
 
         .sphere-card:hover {
@@ -222,11 +220,6 @@ export default function PeriodicTable() {
         @keyframes rotateSphere {
           from { transform: rotateY(0deg); }
           to { transform: rotateY(360deg); }
-        }
-
-        @keyframes counterRotate {
-          from { transform: rotateY(0deg); }
-          to { transform: rotateY(-360deg); }
         }
 
         .scrollbar-hide::-webkit-scrollbar {
