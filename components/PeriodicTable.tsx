@@ -47,7 +47,7 @@ export default function PeriodicTable() {
   const transitionRef = useRef(0); // 0 to 1
   const targetModeRef = useRef<ViewMode>('table');
   const currentModeRef = useRef<ViewMode>('table');
-  const requestRef = useRef<number>();
+  const requestRef = useRef<number>(0);
 
   // Dimensions
   const cardW = 65;
