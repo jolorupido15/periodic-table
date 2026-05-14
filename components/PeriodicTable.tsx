@@ -98,22 +98,22 @@ export default function PeriodicTable() {
                   className="sphere-card group"
                   onClick={() => handleElementClick(el)}
                   style={{
-                    transform: `translate3d(${x}px, ${y}px, ${z}px) rotateY(${theta}rad) rotateX(${phi - Math.PI / 2}rad)`,
-                    border: `1px solid ${catColor}50`,
-                    boxShadow: `0 0 15px ${catColor}40`,
+                    transform: `translate3d(${x}px, ${y}px, ${z}px) rotateY(${-theta * 180 / Math.PI}deg) rotateX(${-phi * 180 / Math.PI}deg)`,
+                    border: `1px solid ${catColor}70`,
+                    boxShadow: `0 0 15px ${catColor}50`,
                   } as React.CSSProperties}
                 >
-                  <div className="flex flex-col items-center justify-center h-full relative">
-                    <span className="text-[8px] absolute top-1 left-1 opacity-60 text-white">
+                  <div className="flex flex-col items-center justify-center h-full relative text-center">
+                    <span className="text-[8px] absolute top-1 left-0 right-0 opacity-70 text-white text-center">
                       {el.number}
                     </span>
                     <span 
-                      className="text-2xl font-black mb-0.5 transition-all duration-300 group-hover:scale-125"
+                      className="text-[18px] font-bold leading-tight transition-all duration-300 group-hover:scale-125"
                       style={{ color: catColor, textShadow: `0 0 10px ${catColor}` }}
                     >
                       {el.symbol}
                     </span>
-                    <span className="text-[7px] uppercase tracking-tighter text-zinc-400 font-bold truncate w-full text-center px-1">
+                    <span className="text-[8px] uppercase tracking-tighter text-zinc-400 font-bold truncate w-full px-1 text-center">
                       {el.name}
                     </span>
                   </div>
