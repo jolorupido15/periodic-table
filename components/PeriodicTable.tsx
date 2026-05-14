@@ -4,22 +4,35 @@ import { useState } from 'react';
 import { elements, Element, ElementCategory } from '@/lib/elements';
 import ElementCard from './ElementCard';
 import ElementDialog from './ElementDialog';
-import ThreeSphere from './ThreeSphere';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
-const categories: { label: string; value: ElementCategory; color: string }[] = [
-  { label: 'Alkali Metals', value: 'alkali metal', color: 'bg-red-500' },
-  { label: 'Alkaline Earth', value: 'alkaline earth metal', color: 'bg-orange-500' },
-  { label: 'Transition Metals', value: 'transition metal', color: 'bg-yellow-500' },
-  { label: 'Post-Transition', value: 'post-transition metal', color: 'bg-teal-500' },
-  { label: 'Metalloids', value: 'metalloid', color: 'bg-emerald-500' },
-  { label: 'Reactive Nonmetals', value: 'reactive nonmetal', color: 'bg-blue-500' },
-  { label: 'Noble Gases', value: 'noble gas', color: 'bg-pink-500' },
-  { label: 'Halogens', value: 'halogen', color: 'bg-purple-500' },
-  { label: 'Lanthanides', value: 'lanthanide', color: 'bg-indigo-500' },
-  { label: 'Actinides', value: 'actinide', color: 'bg-cyan-500' },
+const categories: { label: string; value: ElementCategory; color: string; hex: string }[] = [
+  { label: 'Alkali Metals', value: 'alkali metal', color: 'bg-red-500', hex: '#ef4444' },
+  { label: 'Alkaline Earth', value: 'alkaline earth metal', color: 'bg-orange-500', hex: '#f97316' },
+  { label: 'Transition Metals', value: 'transition metal', color: 'bg-yellow-500', hex: '#eab308' },
+  { label: 'Post-Transition', value: 'post-transition metal', color: 'bg-teal-500', hex: '#14b8a6' },
+  { label: 'Metalloids', value: 'metalloid', color: 'bg-emerald-500', hex: '#10b981' },
+  { label: 'Reactive Nonmetals', value: 'reactive nonmetal', color: 'bg-blue-500', hex: '#3b82f6' },
+  { label: 'Noble Gases', value: 'noble gas', color: 'bg-pink-500', hex: '#ec4899' },
+  { label: 'Halogens', value: 'halogen', color: 'bg-purple-500', hex: '#a855f7' },
+  { label: 'Lanthanides', value: 'lanthanide', color: 'bg-indigo-500', hex: '#6366f1' },
+  { label: 'Actinides', value: 'actinide', color: 'bg-cyan-500', hex: '#06b6d4' },
 ];
+
+const categoryHexColors: Record<string, string> = {
+  'alkali metal': '#ef4444',
+  'alkaline earth metal': '#f97316',
+  'transition metal': '#eab308',
+  'post-transition metal': '#14b8a6',
+  'metalloid': '#10b981',
+  'reactive nonmetal': '#3b82f6',
+  'noble gas': '#ec4899',
+  'halogen': '#a855f7',
+  'lanthanide': '#6366f1',
+  'actinide': '#06b6d4',
+  'unknown': '#52525b',
+};
 
 export default function PeriodicTable() {
   const [selectedElement, setSelectedElement] = useState<Element | null>(null);
@@ -34,15 +47,15 @@ export default function PeriodicTable() {
   return (
     <div className="w-full flex flex-col items-center gap-8 py-10 px-4 md:px-8">
       {/* Controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 z-20">
         <Button 
           variant="outline" 
           onClick={() => setIsSphereMode(!isSphereMode)}
           className={cn(
-            "rounded-full px-8 py-6 text-lg font-bold border-2 transition-all duration-500",
+            "rounded-full px-10 py-7 text-xl font-black border-2 transition-all duration-700 uppercase tracking-widest",
             isSphereMode 
-              ? "bg-white text-black hover:bg-zinc-200 border-white scale-110 shadow-[0_0_20px_rgba(255,255,255,0.4)]" 
-              : "bg-transparent text-white border-white/20 hover:border-white"
+              ? "bg-white text-black hover:bg-zinc-200 border-white scale-110 shadow-[0_0_30px_rgba(255,255,255,0.6)]" 
+              : "bg-transparent text-white border-white/20 hover:border-white hover:shadow-[0_0_20px_rgba(255,255,255,0.2)]"
           )}
         >
           {isSphereMode ? "EXIT SPHERE" : "SPHERE MODE"}
@@ -65,12 +78,48 @@ export default function PeriodicTable() {
 
       {/* Grid Container / Sphere Stage */}
       <div className={cn(
-        "w-full transition-all duration-1000 flex items-center justify-center min-h-[600px]",
-        isSphereMode ? "h-[800px]" : "overflow-x-auto pb-6"
+        "w-full transition-all duration-1000 flex items-center justify-center min-h-[750px]",
+        isSphereMode ? "perspective-[2000px]" : "overflow-x-auto pb-6"
       )}>
         {isSphereMode ? (
-          <div className="w-full h-full animate-in fade-in duration-1000">
-            <ThreeSphere onElementClick={handleElementClick} />
+          <div className="sphere-container">
+            {elements.map((el, i) => {
+              const phi = Math.acos(1 - 2 * (i + 0.5) / 118);
+              const theta = Math.PI * (1 + Math.sqrt(5)) * i;
+              const x = 320 * Math.sin(phi) * Math.cos(theta);
+              const y = 320 * Math.sin(phi) * Math.sin(theta);
+              const z = 320 * Math.cos(phi);
+              
+              const catColor = categoryHexColors[el.category] || '#52525b';
+
+              return (
+                <div 
+                  key={el.number}
+                  className="sphere-card group"
+                  onClick={() => handleElementClick(el)}
+                  style={{
+                    transform: `translate3d(${x}px, ${y}px, ${z}px) rotateY(${theta}rad) rotateX(${phi - Math.PI / 2}rad)`,
+                    border: `1px solid ${catColor}50`,
+                    boxShadow: `0 0 15px ${catColor}40`,
+                  } as React.CSSProperties}
+                >
+                  <div className="flex flex-col items-center justify-center h-full relative">
+                    <span className="text-[8px] absolute top-1 left-1 opacity-60 text-white">
+                      {el.number}
+                    </span>
+                    <span 
+                      className="text-2xl font-black mb-0.5 transition-all duration-300 group-hover:scale-125"
+                      style={{ color: catColor, textShadow: `0 0 10px ${catColor}` }}
+                    >
+                      {el.symbol}
+                    </span>
+                    <span className="text-[7px] uppercase tracking-tighter text-zinc-400 font-bold truncate w-full text-center px-1">
+                      {el.name}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div 
@@ -100,6 +149,42 @@ export default function PeriodicTable() {
       />
 
       <style jsx global>{`
+        .sphere-container {
+          position: relative;
+          width: 700px;
+          height: 700px;
+          margin: auto;
+          transform-style: preserve-3d;
+          animation: rotateSphere 40s linear infinite;
+        }
+
+        .sphere-card {
+          position: absolute;
+          width: 60px;
+          height: 75px;
+          left: 50%;
+          top: 50%;
+          margin-left: -30px;
+          margin-top: -37.5px;
+          background: rgba(10, 10, 10, 0.85);
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.5s ease;
+          backface-visibility: visible;
+          transform-style: preserve-3d;
+        }
+
+        .sphere-card:hover {
+          background: rgba(20, 20, 20, 1);
+          z-index: 100;
+          scale: 1.2;
+        }
+
+        @keyframes rotateSphere {
+          from { transform: rotateY(0deg) rotateX(10deg); }
+          to { transform: rotateY(360deg) rotateX(10deg); }
+        }
+
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }
