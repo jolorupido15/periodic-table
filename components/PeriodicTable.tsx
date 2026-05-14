@@ -178,16 +178,16 @@ export default function PeriodicTable() {
 
   return (
     <div className="w-full flex flex-col items-center px-4 min-h-screen">
-      {/* Header & Controls Container - Fixed at the top, always centered */}
-      <div className="fixed top-0 left-0 w-full pt-8 flex flex-col items-center z-[1000] pointer-events-none">
-        <header className="flex flex-col items-center text-center mb-6 pointer-events-auto">
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] mb-2">
+      {/* Header & Controls Container - Solid Sticky Bar */}
+      <div className="sticky top-0 left-0 w-full pt-6 pb-6 flex flex-col items-center z-[1000] bg-zinc-950/90 backdrop-blur-xl border-b border-white/10 shadow-2xl">
+        <header className="flex flex-col items-center text-center mb-6">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] mb-2">
             Periodic Table
           </h1>
           <div className="h-1 w-20 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full" />
         </header>
 
-        <div className="flex items-center gap-4 bg-black/40 p-2 rounded-full backdrop-blur-md border border-white/10 pointer-events-auto">
+        <div className="flex items-center gap-4 bg-white/5 p-2 rounded-full border border-white/10">
         <Button
           variant="outline"
           onClick={() => toggleMode('table')}
@@ -229,14 +229,14 @@ export default function PeriodicTable() {
 
       {/* Main Content Area */}
       <div className={cn(
-        "w-full relative overflow-hidden transition-all duration-700",
-        viewMode === 'table' ? "mt-0 h-[1000px]" : "fixed inset-0 h-screen"
+        "w-full relative overflow-hidden transition-all duration-700 flex-1",
+        viewMode === 'table' ? "h-[900px] mt-8" : "min-h-[800px]"
       )}>
         <div
           ref={containerRef}
           className={cn(
             "relative w-full h-full flex justify-center",
-            viewMode === 'table' ? "items-start pt-[560px]" : "items-center"
+            viewMode === 'table' ? "items-start pt-[380px]" : "items-center"
           )}
           style={{ transformStyle: 'preserve-3d' }}
         >
