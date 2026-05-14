@@ -8,61 +8,79 @@ import { Button } from '@/components/ui/button';
 
 type ViewMode = 'table' | 'sphere' | 'helix';
 
-/** Radians advanced along the cylinder per element index (larger = more angular gap, less overlap). */
-const HELIX_STEP = 0.32;
+const TAU = Math.PI * 2;
 
 function perspectiveFactor(z3d: number): number {
   return 6000 / (6000 + z3d + 1200);
 }
 
-/** Max |projected x| and |projected y| over indices and a few rotation samples. */
-function maxProjectedHelixExtent(
+/** DNA-style double helix: even/odd indices are opposite strands (π phase), shared rung index j = ⌊i/2⌋. */
+function doubleHelix3D(
+  i: number,
   n: number,
   R: number,
   pitch: number,
-  helixStep: number,
+  anglePerRung: number,
+  rot: number,
+): { x: number; y: number; z: number } {
+  const strand = i % 2;
+  const j = Math.floor(i / 2);
+  const nRungs = Math.ceil(n / 2);
+  const mid = (nRungs - 1) / 2;
+  const theta = j * anglePerRung + strand * Math.PI + rot;
+  return {
+    x: R * Math.sin(theta),
+    y: (j - mid) * pitch,
+    z: R * Math.cos(theta),
+  };
+}
+
+function maxProjectedDoubleHelixExtent(
+  n: number,
+  R: number,
+  pitch: number,
+  anglePerRung: number,
 ): { maxPx: number; maxPy: number } {
-  const idxMid = (n - 1) / 2;
   let maxPx = 0;
   let maxPy = 0;
-  const rotSamples = [0, 0.45, 0.9, 1.35, 1.8];
+  const rotSamples = [0, 0.35, 0.7, 1.05, 1.4, 1.75];
   for (let i = 0; i < n; i++) {
     for (const rot of rotSamples) {
-      const theta = i * helixStep + Math.PI + rot;
-      const y3d = (i - idxMid) * pitch;
-      const x3d = R * Math.sin(theta);
-      const z3d = R * Math.cos(theta);
-      const f = perspectiveFactor(z3d);
-      maxPx = Math.max(maxPx, Math.abs(x3d * f));
-      maxPy = Math.max(maxPy, Math.abs(y3d * f));
+      const { x, y, z } = doubleHelix3D(i, n, R, pitch, anglePerRung, rot);
+      const f = perspectiveFactor(z);
+      maxPx = Math.max(maxPx, Math.abs(x * f));
+      maxPy = Math.max(maxPy, Math.abs(y * f));
     }
   }
   return { maxPx, maxPy };
 }
 
-/** Pick helix radius and vertical pitch so the spiral stays inside the canvas with comfortable padding. */
-function fitHelixToCanvas(
-  canvasW: number,
-  canvasH: number,
-  n: number,
-  helixStep: number,
-): { R: number; pitch: number } {
-  // Inset from borders + slack so scaled cards (~65×75) do not clip at the rim.
-  const edgePadding = 132;
-  const projectedCardSlack = 48;
-  const nx = Math.max(56, canvasW / 2 - edgePadding - projectedCardSlack);
-  const ny = Math.max(56, canvasH / 2 - edgePadding - projectedCardSlack);
+/**
+ * Size a double helix to the canvas: wide radius (horizontal), pitch for full vertical span of all rungs.
+ * anglePerRung fixed from count so ~4.8 turns over all rungs (readable spiral, all 118 elements).
+ */
+function fitHelixToCanvas(canvasW: number, canvasH: number, n: number): { R: number; pitch: number; anglePerRung: number } {
+  const nRungs = Math.ceil(n / 2);
+  const anglePerRung = (4.8 * TAU) / Math.max(1, nRungs - 1);
 
-  let best: { R: number; pitch: number } | null = null;
+  const edgePadding = 92;
+  const projectedCardSlack = 42;
+  const nx = Math.max(72, canvasW / 2 - edgePadding - projectedCardSlack);
+  const ny = Math.max(72, canvasH / 2 - edgePadding - projectedCardSlack);
 
-  for (let R = 64; R <= 320; R += 6) {
-    for (let pitch = 4; pitch <= 20; pitch += 0.3) {
-      const { maxPx, maxPy } = maxProjectedHelixExtent(n, R, pitch, helixStep);
+  let best: { R: number; pitch: number; anglePerRung: number } | null = null;
+
+  for (let R = 110; R <= 420; R += 7) {
+    for (let pitch = 5; pitch <= 26; pitch += 0.35) {
+      const { maxPx, maxPy } = maxProjectedDoubleHelixExtent(n, R, pitch, anglePerRung);
       const ratio = Math.max(maxPx / nx, maxPy / ny);
-      // Tighter bound so fitter leaves more breathing room; prefer looser vertical pitch first.
-      if (ratio <= 0.86) {
-        if (!best || pitch > best.pitch + 0.05 || (Math.abs(pitch - best.pitch) <= 0.05 && R > best.R)) {
-          best = { R, pitch };
+      if (ratio <= 0.92) {
+        if (
+          !best ||
+          R > best.R + 4 ||
+          (Math.abs(R - best.R) <= 4 && pitch > best.pitch + 0.15)
+        ) {
+          best = { R, pitch, anglePerRung };
         }
       }
     }
@@ -72,16 +90,16 @@ function fitHelixToCanvas(
     return best;
   }
 
-  let R = 80;
-  let pitch = 6;
-  for (let iter = 0; iter < 52; iter++) {
-    const { maxPx, maxPy } = maxProjectedHelixExtent(n, R, pitch, helixStep);
+  let R = Math.min(320, nx * 0.9);
+  let pitch = Math.min(18, (1.85 * ny) / Math.max(1, nRungs - 1));
+  for (let iter = 0; iter < 56; iter++) {
+    const { maxPx, maxPy } = maxProjectedDoubleHelixExtent(n, R, pitch, anglePerRung);
     const ratio = Math.max(maxPx / nx, maxPy / ny);
-    if (ratio <= 0.9) return { R, pitch };
-    R *= 0.92;
-    pitch *= 0.92;
+    if (ratio <= 0.94) return { R, pitch, anglePerRung };
+    R *= 0.93;
+    pitch *= 0.93;
   }
-  return { R: 72, pitch: 5.5 };
+  return { R: Math.min(260, nx * 0.85), pitch: 7.5, anglePerRung };
 }
 
 const categoryHexColors: Record<string, string> = {
@@ -127,7 +145,7 @@ export default function PeriodicTable() {
   const targetModeRef = useRef<ViewMode>('table');
   const currentModeRef = useRef<ViewMode>('table');
   const requestRef = useRef<number>(0);
-  const helixParamsRef = useRef({ R: 180, pitch: 8 });
+  const helixParamsRef = useRef({ R: 240, pitch: 11, anglePerRung: 0.52 });
 
 
   // Dimensions
@@ -198,14 +216,8 @@ export default function PeriodicTable() {
           }
           if (m === 'helix') {
             const n = elements.length;
-            const idxMid = (n - 1) / 2;
-            const { R, pitch } = helixParamsRef.current;
-            const helixAngle = i * HELIX_STEP + Math.PI + rot;
-            return {
-              x: R * Math.sin(helixAngle),
-              y: (i - idxMid) * pitch,
-              z: R * Math.cos(helixAngle),
-            };
+            const { R, pitch, anglePerRung } = helixParamsRef.current;
+            return doubleHelix3D(i, n, R, pitch, anglePerRung, rot);
           }
           return { x: 0, y: 0, z: 0 };
         };
@@ -229,8 +241,15 @@ export default function PeriodicTable() {
         
         let opacity = 1;
         if (viewMode !== 'table' || isTransitioning) {
-          // Fade out background elements in 3D modes
-          opacity = 0.4 + (z3d + 500) / 1000 * 0.6;
+          const helixBlend =
+            (!isTransitioning && viewMode === 'helix') ||
+            (isTransitioning &&
+              (currentModeRef.current === 'helix' || targetModeRef.current === 'helix'));
+          if (helixBlend) {
+            opacity = Math.max(0.56, Math.min(0.98, 0.72 + (z3d + 260) / 1500 * 0.22));
+          } else {
+            opacity = 0.4 + (z3d + 500) / 1000 * 0.6;
+          }
         }
 
         const card = cardRefs.current[i];
@@ -275,7 +294,7 @@ export default function PeriodicTable() {
       const h = el.clientHeight;
       if (w < 1 || h < 1) return;
       setStageCenterPx({ x: w / 2, y: h / 2 });
-      helixParamsRef.current = fitHelixToCanvas(w, h, elements.length, HELIX_STEP);
+      helixParamsRef.current = fitHelixToCanvas(w, h, elements.length);
     };
 
     sync();
