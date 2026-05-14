@@ -178,19 +178,16 @@ export default function PeriodicTable() {
 
   return (
     <div className="w-full flex flex-col items-center px-4 min-h-screen">
-      {/* Header & Controls Container */}
-      <div className={cn(
-        "z-[1000] flex flex-col items-center transition-all duration-1000",
-        viewMode === 'table' ? "relative mt-12 mb-4" : "fixed top-8 left-1/2 -translate-x-1/2 w-full"
-      )}>
-        <header className="flex flex-col items-center text-center mb-6">
+      {/* Header & Controls Container - Fixed at the top, always centered */}
+      <div className="fixed top-0 left-0 w-full pt-8 flex flex-col items-center z-[1000] pointer-events-none">
+        <header className="flex flex-col items-center text-center mb-6 pointer-events-auto">
           <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] mb-2">
             Periodic Table
           </h1>
           <div className="h-1 w-20 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full" />
         </header>
 
-        <div className="flex items-center gap-4 bg-black/40 p-2 rounded-full backdrop-blur-md border border-white/10">
+        <div className="flex items-center gap-4 bg-black/40 p-2 rounded-full backdrop-blur-md border border-white/10 pointer-events-auto">
         <Button
           variant="outline"
           onClick={() => toggleMode('table')}
@@ -233,13 +230,13 @@ export default function PeriodicTable() {
       {/* Main Content Area */}
       <div className={cn(
         "w-full relative overflow-hidden transition-all duration-700",
-        viewMode === 'table' ? "h-[850px]" : "fixed inset-0 h-screen"
+        viewMode === 'table' ? "mt-0 h-[1000px]" : "fixed inset-0 h-screen"
       )}>
         <div
           ref={containerRef}
           className={cn(
             "relative w-full h-full flex justify-center",
-            viewMode === 'table' ? "items-start pt-[380px]" : "items-center"
+            viewMode === 'table' ? "items-start pt-[560px]" : "items-center"
           )}
           style={{ transformStyle: 'preserve-3d' }}
         >
