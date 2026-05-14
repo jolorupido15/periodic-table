@@ -114,7 +114,7 @@ export default function PeriodicTable() {
       const items: { index: number; z3d: number }[] = [];
 
       elementData.forEach((data, i) => {
-        const { tx, ty, phi, theta, helixAngle, hy } = data;
+        const { tx, ty, phi, theta, helixTheta, hy } = data;
         let x3d = 0, y3d = 0, z3d = 0;
 
         const getPos = (m: ViewMode) => {
