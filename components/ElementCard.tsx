@@ -5,7 +5,10 @@ import { cn } from '@/lib/utils';
 
 interface ElementCardProps {
   element: Element;
+  index: number;
   onClick: (element: Element) => void;
+  isSphereMode: boolean;
+  sphereStyle?: React.CSSProperties;
 }
 
 const categoryColors: Record<ElementCategory, string> = {
@@ -22,18 +25,24 @@ const categoryColors: Record<ElementCategory, string> = {
   'unknown': 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-700/50',
 };
 
-export default function ElementCard({ element, onClick }: ElementCardProps) {
+export default function ElementCard({ element, index, onClick, isSphereMode, sphereStyle }: ElementCardProps) {
+  const gridStyle: React.CSSProperties = {
+    gridColumn: element.xpos,
+    gridRow: element.ypos,
+    animationDelay: `${index * 0.02}s`,
+  };
+
   return (
     <div
       onClick={() => onClick(element)}
       className={cn(
-        'relative flex flex-col items-center justify-center p-1.5 border transition-all duration-300 cursor-pointer rounded-sm group select-none hover:-translate-y-1',
-        categoryColors[element.category]
+        'relative flex flex-col items-center justify-center p-1.5 border transition-all duration-700 cursor-pointer rounded-sm group select-none hover:-translate-y-1',
+        'animate-in fade-in slide-in-from-bottom-4 fill-mode-forwards opacity-0',
+        !isSphereMode && 'animate-float',
+        categoryColors[element.category],
+        isSphereMode ? 'absolute w-16 h-20' : 'relative'
       )}
-      style={{
-        gridColumn: element.xpos,
-        gridRow: element.ypos,
-      }}
+      style={isSphereMode ? { ...sphereStyle, animationDelay: `${index * 0.01}s` } : gridStyle}
     >
       <span className="absolute top-0.5 left-1 text-[10px] font-medium opacity-70">
         {element.number}
@@ -41,12 +50,36 @@ export default function ElementCard({ element, onClick }: ElementCardProps) {
       <span className="text-lg font-bold tracking-tight">
         {element.symbol}
       </span>
-      <span className="text-[9px] font-medium truncate w-full text-center mt-0.5 opacity-90">
+      <span className="text-[9px] font-medium truncate w-full text-center mt-0.5 opacity-90 group-hover:scale-110 transition-transform">
         {element.name}
       </span>
       <span className="text-[8px] opacity-60 mt-0.5">
         {element.atomic_mass}
       </span>
+
+      <style jsx>{`
+        .animate-in {
+          animation: fadeInSlide 0.6s ease-out forwards;
+        }
+        @keyframes fadeInSlide {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-float {
+          animation: float 6s ease-in-out infinite;
+          animation-delay: ${index * 0.1}s;
+        }
+        @keyframes float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-5px); }
+        }
+      `}</style>
     </div>
   );
 }
