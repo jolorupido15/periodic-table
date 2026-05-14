@@ -6,10 +6,10 @@ import GalaxyBackground from '@/components/GalaxyBackground';
 
 export default function Home() {
   return (
-    <main className="relative flex min-h-dvh w-full flex-col items-stretch overflow-x-hidden text-zinc-100">
+    <main className="relative flex h-dvh min-h-0 w-full flex-col items-stretch overflow-x-hidden overflow-y-auto text-zinc-100">
       <GalaxyBackground />
       <PeriodicTable />
-      <footer className="relative z-10 mt-auto py-8 text-zinc-600 text-sm font-medium tracking-widest uppercase">
+      <footer className="relative z-10 mt-auto w-full py-8 text-center text-zinc-600 text-sm font-medium tracking-widest uppercase">
         Cosmic Periodic Table • Portfolio Project
       </footer>
 

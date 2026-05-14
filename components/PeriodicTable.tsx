@@ -212,7 +212,7 @@ export default function PeriodicTable() {
   }, [needs3DCenter]);
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col items-stretch self-stretch px-4">
+    <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col items-stretch self-stretch px-4">
       {/* Header & Controls Container */}
       <div className="sticky top-0 left-0 w-full shrink-0 pt-6 pb-2 flex flex-col items-center z-[1001] bg-transparent border-none shadow-none ring-0 outline-none">
         <header className="flex flex-col items-center text-center mb-6 border-none shadow-none ring-0 outline-none">
@@ -274,16 +274,16 @@ export default function PeriodicTable() {
       </div>
     </div>
 
-      {/* Main: table = fixed height; sphere/helix = grow to fill viewport below header (flex-1). */}
+      {/* Main: table = fixed height; sphere/helix = remaining column height (viewport − footer − header). */}
       <div
         className={cn(
-          'relative w-full min-h-0 overflow-hidden border-none shadow-none outline-none ring-0',
-          activeMode === 'table' ? 'h-[750px] shrink-0' : 'min-h-[200px] flex-1',
+          'relative w-full min-h-0 min-w-0 overflow-hidden border-none shadow-none outline-none ring-0',
+          activeMode === 'table' ? 'h-[750px] shrink-0' : 'min-h-0 flex-1 basis-0',
         )}
       >
         <div
           ref={containerRef}
-          className="relative box-border h-full min-h-0 w-full border-0 border-none shadow-none outline-none ring-0"
+          className="relative box-border h-full min-h-0 min-w-0 w-full border-0 border-none shadow-none outline-none ring-0"
           style={{ transformStyle: 'preserve-3d', border: 'none', outline: 'none' }}
         >
           {/* Pivot origin = sphere center. No translate on 0×0 box (broken %). Cards use translate(-50%,-50%) for their own size. */}
