@@ -228,11 +228,11 @@ export default function PeriodicTable() {
       
       {/* Legend - Moved below buttons */}
       {viewMode === 'table' && (
-        <div className="flex flex-wrap justify-center gap-4 transition-all duration-700 mt-4 pb-2">
+        <div className="flex flex-nowrap overflow-x-auto scrollbar-hide justify-center gap-3 transition-all duration-700 mt-4 pb-2 w-full max-w-full px-4">
           {categories.map((cat) => (
-            <div key={cat.value} className="flex items-center gap-2">
-              <div className={cn("w-3 h-3 rounded-full", cat.color)} />
-              <span className="text-xs font-medium text-zinc-400 uppercase tracking-widest">
+            <div key={cat.value} className="flex items-center gap-1.5 whitespace-nowrap">
+              <div className={cn("w-2 h-2 rounded-full shrink-0", cat.color)} />
+              <span className="text-[10px] md:text-xs font-medium text-zinc-400 uppercase tracking-wider">
                 {cat.label}
               </span>
             </div>
