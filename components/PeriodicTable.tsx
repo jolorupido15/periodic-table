@@ -79,7 +79,7 @@ export default function PeriodicTable() {
 
   const toggleMode = (mode: ViewMode) => {
     if (viewMode === mode || isTransitioning) return;
-    
+
     targetModeRef.current = mode;
     currentModeRef.current = viewMode;
     setIsTransitioning(true);
@@ -114,7 +114,7 @@ export default function PeriodicTable() {
 
       elementData.forEach((data, i) => {
         const { tx, ty, phi, theta, helixAngle, hy } = data;
-        
+
         let x3d = 0, y3d = 0, z3d = 0;
 
         // Calculate 3D position for each mode
@@ -185,37 +185,37 @@ export default function PeriodicTable() {
     <div className="w-full flex flex-col items-center gap-12 py-10 px-4">
       {/* Controls */}
       <div className="flex items-center gap-6 z-[1000]">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => toggleMode('table')}
           className={cn(
             "rounded-full px-8 py-6 text-sm font-bold border-2 transition-all duration-500 uppercase tracking-widest",
             viewMode === 'table' && !isTransitioning
-              ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
+              ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]"
               : "bg-transparent text-white border-white/20 hover:border-white"
           )}
         >
           TABLE MODE
         </Button>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => toggleMode('sphere')}
           className={cn(
             "rounded-full px-8 py-6 text-sm font-bold border-2 transition-all duration-500 uppercase tracking-widest",
             (viewMode === 'sphere' || (isTransitioning && targetModeRef.current === 'sphere'))
-              ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
+              ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]"
               : "bg-transparent text-white border-white/20 hover:border-white"
           )}
         >
           SPHERE MODE
         </Button>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => toggleMode('helix')}
           className={cn(
             "rounded-full px-8 py-6 text-sm font-bold border-2 transition-all duration-500 uppercase tracking-widest",
             (viewMode === 'helix' || (isTransitioning && targetModeRef.current === 'helix'))
-              ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]" 
+              ? "bg-white text-black border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]"
               : "bg-transparent text-white border-white/20 hover:border-white"
           )}
         >
@@ -230,7 +230,7 @@ export default function PeriodicTable() {
           {elements.map((el, i) => {
             const catColor = categoryHexColors[el.category] || '#52525b';
             return (
-              <div 
+              <div
                 key={el.number}
                 ref={el => cardRefs.current[i] = el}
                 className="absolute left-1/2 top-1/2 w-[65px] h-[75px] bg-zinc-950/90 border rounded-md cursor-pointer transition-colors duration-300 group overflow-hidden will-change-transform"
@@ -244,7 +244,7 @@ export default function PeriodicTable() {
                   <span className="text-[9px] absolute top-1 right-1.5 opacity-60 text-zinc-400 font-bold">
                     {el.number}
                   </span>
-                  <span 
+                  <span
                     className="text-xl font-black mb-0.5 group-hover:scale-125 transition-transform duration-300"
                     style={{ color: catColor, textShadow: `0 0 10px ${catColor}50` }}
                   >
@@ -254,7 +254,7 @@ export default function PeriodicTable() {
                     {el.name}
                   </span>
                 </div>
-                <div 
+                <div
                   className="absolute bottom-0 left-0 right-0 h-0.5 opacity-50"
                   style={{ backgroundColor: catColor }}
                 />
@@ -264,10 +264,10 @@ export default function PeriodicTable() {
         </div>
       </div>
 
-      <ElementDialog 
-        element={selectedElement} 
-        isOpen={isDialogOpen} 
-        onClose={() => setIsDialogOpen(false)} 
+      <ElementDialog
+        element={selectedElement}
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
       />
 
       <style jsx global>{`
