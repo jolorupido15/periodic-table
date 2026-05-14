@@ -179,7 +179,7 @@ export default function PeriodicTable() {
   return (
     <div className="w-full flex flex-col items-center px-4 min-h-screen">
       {/* Header & Controls Container */}
-      <div className="sticky top-0 left-0 w-full pt-6 pb-2 flex flex-col items-center z-[1000] bg-zinc-950/90 backdrop-blur-xl">
+      <div className="sticky top-0 left-0 w-full pt-6 pb-2 flex flex-col items-center z-[1000] bg-zinc-950/90 backdrop-blur-xl border-none shadow-none ring-0 outline-none">
         <header className="flex flex-col items-center text-center mb-6">
           <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] mb-2">
             Periodic Table
@@ -187,7 +187,7 @@ export default function PeriodicTable() {
           <div className="h-1 w-20 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-full" />
         </header>
 
-        <div className="flex items-center gap-4 bg-white/5 p-2 rounded-full">
+        <div className="flex items-center gap-4 bg-white/5 p-2 rounded-full border-none shadow-none ring-0 outline-none">
         <Button
           variant="outline"
           onClick={() => toggleMode('table')}
@@ -244,18 +244,18 @@ export default function PeriodicTable() {
       {/* Main Content Area */}
       <div className={cn(
         "w-full relative overflow-hidden transition-all duration-700 flex-1",
-        viewMode === 'table' ? "h-[850px] mt-2" : "min-h-[800px]"
+        viewMode === 'table' ? "h-[750px]" : "min-h-[800px]"
       )}>
         <div
           ref={containerRef}
-          className={cn(
-            "relative w-full h-full flex justify-center",
-            viewMode === 'table' ? "items-start pt-[340px]" : "items-center"
-          )}
+          className="relative w-full h-full flex justify-center"
           style={{ transformStyle: 'preserve-3d' }}
         >
           {/* Internal Center Point for Helix/Sphere */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-0 h-0" style={{ transformStyle: 'preserve-3d' }}>
+          <div className={cn(
+            "absolute left-1/2 -translate-x-1/2 w-0 h-0 transition-all duration-700",
+            viewMode === 'table' ? "top-[320px]" : "top-1/2 -translate-y-1/2"
+          )} style={{ transformStyle: 'preserve-3d' }}>
             {elements.map((el, i) => {
               const catColor = categoryHexColors[el.category] || '#52525b';
               return (
