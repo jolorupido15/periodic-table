@@ -8,6 +8,79 @@ import { Button } from '@/components/ui/button';
 
 type ViewMode = 'table' | 'sphere' | 'helix';
 
+/** Radians advanced along the cylinder per element index. */
+const HELIX_STEP = 0.175;
+
+function perspectiveFactor(z3d: number): number {
+  return 6000 / (6000 + z3d + 1200);
+}
+
+/** Max |projected x| and |projected y| over indices and a few rotation samples. */
+function maxProjectedHelixExtent(
+  n: number,
+  R: number,
+  pitch: number,
+  helixStep: number,
+): { maxPx: number; maxPy: number } {
+  const idxMid = (n - 1) / 2;
+  let maxPx = 0;
+  let maxPy = 0;
+  const rotSamples = [0, 0.45, 0.9, 1.35, 1.8];
+  for (let i = 0; i < n; i++) {
+    for (const rot of rotSamples) {
+      const theta = i * helixStep + Math.PI + rot;
+      const y3d = (i - idxMid) * pitch;
+      const x3d = R * Math.sin(theta);
+      const z3d = R * Math.cos(theta);
+      const f = perspectiveFactor(z3d);
+      maxPx = Math.max(maxPx, Math.abs(x3d * f));
+      maxPy = Math.max(maxPy, Math.abs(y3d * f));
+    }
+  }
+  return { maxPx, maxPy };
+}
+
+/** Pick helix radius and vertical pitch so the spiral stays inside the canvas (with card margin). */
+function fitHelixToCanvas(
+  canvasW: number,
+  canvasH: number,
+  n: number,
+  helixStep: number,
+): { R: number; pitch: number } {
+  const cardMargin = 96;
+  const nx = Math.max(64, canvasW / 2 - cardMargin);
+  const ny = Math.max(64, canvasH / 2 - cardMargin);
+
+  let best: { R: number; pitch: number } | null = null;
+
+  for (let R = 72; R <= 340; R += 8) {
+    for (let pitch = 2.4; pitch <= 11; pitch += 0.35) {
+      const { maxPx, maxPy } = maxProjectedHelixExtent(n, R, pitch, helixStep);
+      const ratio = Math.max(maxPx / nx, maxPy / ny);
+      if (ratio <= 0.94) {
+        if (!best || R > best.R) {
+          best = { R, pitch };
+        }
+      }
+    }
+  }
+
+  if (best) {
+    return best;
+  }
+
+  let R = 70;
+  let pitch = 2.8;
+  for (let iter = 0; iter < 48; iter++) {
+    const { maxPx, maxPy } = maxProjectedHelixExtent(n, R, pitch, helixStep);
+    const ratio = Math.max(maxPx / nx, maxPy / ny);
+    if (ratio <= 0.96) return { R, pitch };
+    R *= 0.9;
+    pitch *= 0.9;
+  }
+  return { R: 64, pitch: 2.4 };
+}
+
 const categoryHexColors: Record<string, string> = {
   'alkali metal': '#ef4444',
   'alkaline earth metal': '#f97316',
@@ -51,6 +124,7 @@ export default function PeriodicTable() {
   const targetModeRef = useRef<ViewMode>('table');
   const currentModeRef = useRef<ViewMode>('table');
   const requestRef = useRef<number>(0);
+  const helixParamsRef = useRef({ R: 200, pitch: 5 });
 
 
   // Dimensions
@@ -71,11 +145,7 @@ export default function PeriodicTable() {
       const phi = Math.acos(1 - 2 * (i + 0.5) / 118);
       const theta = Math.PI * (1 + Math.sqrt(5)) * i;
 
-      // New Standard Helix Math (Single Cylinder Spiral)
-      const helixTheta = i * 0.175 + Math.PI;
-      const hy = -(i * 12) + 120; // Adjusted for better centering
-
-      return { tx, ty, phi, theta, helixTheta, hy };
+      return { tx, ty, phi, theta };
     });
   }, [gridW, gridH]);
 
@@ -111,7 +181,7 @@ export default function PeriodicTable() {
       const items: { index: number; z3d: number }[] = [];
 
       elementData.forEach((data, i) => {
-        const { tx, ty, phi, theta, helixTheta, hy } = data;
+        const { tx, ty, phi, theta } = data;
         let x3d = 0, y3d = 0, z3d = 0;
 
         const getPos = (m: ViewMode) => {
@@ -124,10 +194,14 @@ export default function PeriodicTable() {
             };
           }
           if (m === 'helix') {
+            const n = elements.length;
+            const idxMid = (n - 1) / 2;
+            const { R, pitch } = helixParamsRef.current;
+            const helixAngle = i * HELIX_STEP + Math.PI + rot;
             return {
-              x: Math.sin(helixTheta + rot) * 1100,
-              y: hy,
-              z: Math.cos(helixTheta + rot) * 1100
+              x: R * Math.sin(helixAngle),
+              y: (i - idxMid) * pitch,
+              z: R * Math.cos(helixAngle),
             };
           }
           return { x: 0, y: 0, z: 0 };
@@ -145,15 +219,10 @@ export default function PeriodicTable() {
           x3d = pos.x; y3d = pos.y; z3d = pos.z;
         }
 
-        const perspective = 6000 / (6000 + z3d + 1200);
+        const perspective = perspectiveFactor(z3d);
         const x2d = x3d * perspective;
         const y2d = y3d * perspective;
-        
-        const startScale = currentModeRef.current === 'helix' ? 0.7 : 1;
-        const endScale = isTransitioning ? (targetModeRef.current === 'helix' ? 0.7 : 1) : startScale;
-        const ease = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        const modeScale = isTransitioning ? startScale + (endScale - startScale) * ease : startScale;
-        const scale = perspective * modeScale;
+        const scale = perspective;
         
         let opacity = 1;
         if (viewMode !== 'table' || isTransitioning) {
@@ -203,6 +272,7 @@ export default function PeriodicTable() {
       const h = el.clientHeight;
       if (w < 1 || h < 1) return;
       setStageCenterPx({ x: w / 2, y: h / 2 });
+      helixParamsRef.current = fitHelixToCanvas(w, h, elements.length, HELIX_STEP);
     };
 
     sync();
