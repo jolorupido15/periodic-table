@@ -38,18 +38,26 @@ export default function PeriodicTable() {
   const [selectedElement, setSelectedElement] = useState<Element | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSphereMode, setIsSphereMode] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [fadeState, setFadeState] = useState<'in' | 'out'>('in');
 
   const toggleMode = () => {
-    setFadeState('out');
-    setIsTransitioning(true);
-    
-    setTimeout(() => {
-      setIsSphereMode(!isSphereMode);
-      setFadeState('in');
-      setIsTransitioning(false);
-    }, 300);
+    if (isSphereMode) {
+      // EXIT Sphere
+      setFadeState('out');
+      setTimeout(() => {
+        setIsSphereMode(false);
+        setFadeState('in');
+      }, 300);
+    } else {
+      // ENTER Sphere
+      setIsAnimating(true);
+      setTimeout(() => {
+        setIsSphereMode(true);
+        setIsAnimating(false);
+        setFadeState('in');
+      }, 1000);
+    }
   };
 
   const handleElementClick = (element: Element) => {
@@ -64,7 +72,7 @@ export default function PeriodicTable() {
         <Button 
           variant="outline" 
           onClick={toggleMode}
-          disabled={isTransitioning}
+          disabled={isAnimating}
           className={cn(
             "rounded-full px-10 py-7 text-xl font-black border-2 transition-all duration-700 uppercase tracking-widest",
             isSphereMode 
@@ -77,12 +85,16 @@ export default function PeriodicTable() {
       </div>
 
       {/* Main Content Area */}
-      <div className={cn(
-        "w-full transition-all duration-500 ease-in-out",
-        fadeState === 'out' ? "opacity-0 scale-95 blur-sm" : "opacity-100 scale-100 blur-0"
-      )}>
+      <div className="w-full">
         {isSphereMode ? (
-          <div className="sphere-stage perspective-[2000px]">
+          <div 
+            className="sphere-stage perspective-[2000px]"
+            style={{
+              opacity: fadeState === 'in' ? 1 : 0,
+              transform: fadeState === 'in' ? 'scale(1)' : 'scale(0.5)',
+              transition: 'all 0.8s ease',
+            }}
+          >
             <div className="sphere-container">
               {elements.map((el, i) => {
                 const phi = Math.acos(1 - 2 * (i + 0.5) / 118);
@@ -114,7 +126,7 @@ export default function PeriodicTable() {
                           {el.number}
                         </span>
                         <span 
-                          className="text-[18px] font-bold leading-tight transition-all duration-300 group-hover:scale-125"
+                          className="text-[18px] font-bold transition-all duration-300 group-hover:scale-125"
                           style={{ color: catColor, textShadow: `0 0 10px ${catColor}` }}
                         >
                           {el.symbol}
@@ -130,9 +142,17 @@ export default function PeriodicTable() {
             </div>
           </div>
         ) : (
-          <div className="table-stage flex flex-col items-center gap-8 animate-in fade-in duration-500">
+          <div 
+            className={cn(
+              "table-stage flex flex-col items-center gap-8 transition-all duration-500",
+              fadeState === 'out' && !isAnimating && "opacity-0 scale-95"
+            )}
+          >
             {/* Legend */}
-            <div className="flex flex-wrap justify-center gap-3 md:gap-6 bg-zinc-900/40 p-4 rounded-xl border border-zinc-800/50 backdrop-blur-sm">
+            <div className={cn(
+              "flex flex-wrap justify-center gap-3 md:gap-6 bg-zinc-900/40 p-4 rounded-xl border border-zinc-800/50 backdrop-blur-sm transition-opacity duration-500",
+              isAnimating && "opacity-0"
+            )}>
               {categories.map((cat) => (
                 <div key={cat.value} className="flex items-center gap-2">
                   <div className={cn("w-3 h-3 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.2)]", cat.color)} />
@@ -159,6 +179,13 @@ export default function PeriodicTable() {
                     index={index}
                     onClick={handleElementClick} 
                     isSphereMode={false}
+                    isAnimating={isAnimating}
+                    customStyle={{
+                      transition: 'all 0.5s ease',
+                      transitionDelay: isAnimating ? `${index * 8}ms` : (fadeState === 'in' && !isSphereMode ? `${index * 5}ms` : '0ms'),
+                      transform: isAnimating ? 'scale(0) rotate(360deg)' : (fadeState === 'in' && !isSphereMode ? 'scale(1)' : 'scale(0)'),
+                      opacity: isAnimating ? 0 : (fadeState === 'in' && !isSphereMode ? 1 : 0),
+                    }}
                   />
                 ))}
               </div>

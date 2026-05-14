@@ -9,6 +9,8 @@ interface ElementCardProps {
   onClick: (element: Element) => void;
   isSphereMode: boolean;
   sphereStyle?: React.CSSProperties;
+  isAnimating?: boolean;
+  customStyle?: React.CSSProperties;
 }
 
 const categoryColors: Record<ElementCategory, string> = {
@@ -25,11 +27,20 @@ const categoryColors: Record<ElementCategory, string> = {
   'unknown': 'bg-zinc-800/50 border-zinc-700 text-zinc-400 hover:bg-zinc-700/50',
 };
 
-export default function ElementCard({ element, index, onClick, isSphereMode, sphereStyle }: ElementCardProps) {
+export default function ElementCard({ 
+  element, 
+  index, 
+  onClick, 
+  isSphereMode, 
+  sphereStyle, 
+  isAnimating, 
+  customStyle 
+}: ElementCardProps) {
   const gridStyle: React.CSSProperties = {
     gridColumn: element.xpos,
     gridRow: element.ypos,
     animationDelay: `${index * 0.02}s`,
+    ...customStyle
   };
 
   return (
@@ -40,7 +51,7 @@ export default function ElementCard({ element, index, onClick, isSphereMode, sph
         categoryColors[element.category],
         isSphereMode ? 'absolute w-16 h-20' : 'relative'
       )}
-      style={isSphereMode ? { ...sphereStyle, animationDelay: `${index * 0.01}s` } : gridStyle}
+      style={isSphereMode ? { ...sphereStyle, animationDelay: `${index * 0.01}s`, ...customStyle } : gridStyle}
     >
       <div className={cn(
         "w-full h-full flex flex-col items-center justify-center p-1.5",
