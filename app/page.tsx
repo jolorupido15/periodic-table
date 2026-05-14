@@ -10,10 +10,10 @@ export default function Home() {
       {/* Immersive Galaxy Background */}
       <GalaxyBackground />
       
-      <div className="relative z-10 w-full max-w-7xl px-4 pt-12 pb-6">
-        <header className="relative z-20 flex flex-col items-center text-center space-y-4 mb-12">
+      <div className="relative z-50 w-full max-w-7xl px-4 pt-12 pb-6">
+        <header className="flex flex-col items-center text-center space-y-4 mb-12">
           <div className="animate-in fade-in zoom-in duration-1000">
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+            <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.5)]">
               Periodic Table
             </h1>
           </div>

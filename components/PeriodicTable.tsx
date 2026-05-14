@@ -41,6 +41,7 @@ export default function PeriodicTable() {
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [targetMode, setTargetMode] = useState<ViewMode | null>(null);
+  const [windowHeight, setWindowHeight] = useState(0); 
 
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -147,7 +148,12 @@ export default function PeriodicTable() {
         const x2d = x3d * perspective;
         const y2d = y3d * perspective;
         const scale = perspective * (viewMode === 'helix' ? 0.7 : 1);
-        const opacity = viewMode === 'table' && !isTransitioning ? 1 : 0.4 + (z3d + 300) / 600 * 0.6;
+        
+        let opacity = 1;
+        if (viewMode !== 'table' || isTransitioning) {
+          // Fade out background elements in 3D modes
+          opacity = 0.4 + (z3d + 500) / 1000 * 0.6;
+        }
 
         const card = cardRefs.current[i];
         if (card) {
@@ -214,8 +220,8 @@ export default function PeriodicTable() {
 
       {/* Main Content Area - Full Viewport Centered */}
       <div className={cn(
-        "w-screen h-screen flex items-center justify-center relative overflow-hidden",
-        viewMode === 'table' ? "mt-24 h-auto" : "fixed inset-0"
+        "w-full relative overflow-hidden transition-all duration-700",
+        viewMode === 'table' ? "mt-32 h-[900px]" : "fixed inset-0 h-screen"
       )}>
         <div
           ref={containerRef}
