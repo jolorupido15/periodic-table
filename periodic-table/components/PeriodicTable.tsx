@@ -67,10 +67,6 @@ export default function PeriodicTable() {
 
   // Pre-calculate base positions/data
   const elementData = useMemo(() => {
-    // Aggressive spacing for extreme readability
-    const helixSpacing = 45;
-    const verticalOffset = 300;
-
     return elements.map((el, i) => {
       // Table Pos
       const tx = (el.xpos - 1) * (cardW + gap) - gridW / 2 + cardW / 2;
@@ -80,16 +76,11 @@ export default function PeriodicTable() {
       const phi = Math.acos(1 - 2 * (i + 0.5) / 118);
       const theta = Math.PI * (1 + Math.sqrt(5)) * i;
 
-      // Helix Base (Double Strand)
-      const strand = i < 59 ? 0 : 1;
-      const idx = strand === 0 ? i : i - 59;
-      const helixAngle = (idx / 59) * Math.PI * 12 + (strand === 1 ? Math.PI : 0);
+      // New Standard Helix Math (Single Cylinder Spiral)
+      const helixTheta = i * 0.175 + Math.PI;
+      const hy = -(i * 12) + 120; // Adjusted for better centering
 
-      // Centered Helix Math
-      const centeredIdx = idx - 59 / 2;
-      const hy = centeredIdx * helixSpacing + verticalOffset;
-
-      return { tx, ty, phi, theta, helixAngle, hy };
+      return { tx, ty, phi, theta, helixTheta, hy };
     });
   }, [windowHeight, gridW, gridH]);
 
@@ -137,9 +128,9 @@ export default function PeriodicTable() {
           }
           if (m === 'helix') {
             return {
-              x: Math.cos(helixAngle + rot) * 850,
+              x: Math.sin(helixTheta + rot) * 1100,
               y: hy,
-              z: Math.sin(helixAngle + rot) * 850
+              z: Math.cos(helixTheta + rot) * 1100
             };
           }
           return { x: 0, y: 0, z: 0 };
@@ -157,10 +148,10 @@ export default function PeriodicTable() {
           x3d = pos.x; y3d = pos.y; z3d = pos.z;
         }
 
-        const perspective = 4500 / (4500 + z3d + 800);
+        const perspective = 6000 / (6000 + z3d + 1200);
         const x2d = x3d * perspective;
         const y2d = y3d * perspective;
-        const scale = perspective * (viewMode === 'helix' ? 0.6 : 1);
+        const scale = perspective * (viewMode === 'helix' ? 0.7 : 1);
         const opacity = viewMode === 'table' && !isTransitioning ? 1 : 0.4 + (z3d + 300) / 600 * 0.6;
 
         const card = cardRefs.current[i];
