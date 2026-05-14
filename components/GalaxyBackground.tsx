@@ -79,16 +79,16 @@ export default function GalaxyBackground() {
   }, []);
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-[#050505] pointer-events-none">
+    <div className="fixed inset-0 overflow-hidden bg-[#050505] pointer-events-none z-0">
       {/* Nebula effects */}
       <div className="absolute inset-0 opacity-30">
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-purple-900/40 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-900/30 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
         <div className="absolute top-[30%] right-[20%] w-[40%] h-[40%] bg-indigo-900/20 rounded-full blur-[150px]" />
       </div>
-      <canvas 
-        ref={canvasRef} 
-        className="fixed top-0 left-0 w-full h-full z-0 pointer-events-none" 
+      <canvas
+        ref={canvasRef}
+        className="fixed top-0 left-0 w-full h-full z-0 pointer-events-none"
       />
     </div>
   );
