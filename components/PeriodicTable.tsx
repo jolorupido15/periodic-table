@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 
 type ViewMode = 'table' | 'sphere' | 'helix';
 
-/** Radians advanced along the cylinder per element index. */
-const HELIX_STEP = 0.175;
+/** Radians advanced along the cylinder per element index (larger = more angular gap, less overlap). */
+const HELIX_STEP = 0.32;
 
 function perspectiveFactor(z3d: number): number {
   return 6000 / (6000 + z3d + 1200);
@@ -40,25 +40,28 @@ function maxProjectedHelixExtent(
   return { maxPx, maxPy };
 }
 
-/** Pick helix radius and vertical pitch so the spiral stays inside the canvas (with card margin). */
+/** Pick helix radius and vertical pitch so the spiral stays inside the canvas with comfortable padding. */
 function fitHelixToCanvas(
   canvasW: number,
   canvasH: number,
   n: number,
   helixStep: number,
 ): { R: number; pitch: number } {
-  const cardMargin = 96;
-  const nx = Math.max(64, canvasW / 2 - cardMargin);
-  const ny = Math.max(64, canvasH / 2 - cardMargin);
+  // Inset from borders + slack so scaled cards (~65×75) do not clip at the rim.
+  const edgePadding = 132;
+  const projectedCardSlack = 48;
+  const nx = Math.max(56, canvasW / 2 - edgePadding - projectedCardSlack);
+  const ny = Math.max(56, canvasH / 2 - edgePadding - projectedCardSlack);
 
   let best: { R: number; pitch: number } | null = null;
 
-  for (let R = 72; R <= 340; R += 8) {
-    for (let pitch = 2.4; pitch <= 11; pitch += 0.35) {
+  for (let R = 64; R <= 320; R += 6) {
+    for (let pitch = 4; pitch <= 20; pitch += 0.3) {
       const { maxPx, maxPy } = maxProjectedHelixExtent(n, R, pitch, helixStep);
       const ratio = Math.max(maxPx / nx, maxPy / ny);
-      if (ratio <= 0.94) {
-        if (!best || R > best.R) {
+      // Tighter bound so fitter leaves more breathing room; prefer looser vertical pitch first.
+      if (ratio <= 0.86) {
+        if (!best || pitch > best.pitch + 0.05 || (Math.abs(pitch - best.pitch) <= 0.05 && R > best.R)) {
           best = { R, pitch };
         }
       }
@@ -69,16 +72,16 @@ function fitHelixToCanvas(
     return best;
   }
 
-  let R = 70;
-  let pitch = 2.8;
-  for (let iter = 0; iter < 48; iter++) {
+  let R = 80;
+  let pitch = 6;
+  for (let iter = 0; iter < 52; iter++) {
     const { maxPx, maxPy } = maxProjectedHelixExtent(n, R, pitch, helixStep);
     const ratio = Math.max(maxPx / nx, maxPy / ny);
-    if (ratio <= 0.96) return { R, pitch };
-    R *= 0.9;
-    pitch *= 0.9;
+    if (ratio <= 0.9) return { R, pitch };
+    R *= 0.92;
+    pitch *= 0.92;
   }
-  return { R: 64, pitch: 2.4 };
+  return { R: 72, pitch: 5.5 };
 }
 
 const categoryHexColors: Record<string, string> = {
@@ -124,7 +127,7 @@ export default function PeriodicTable() {
   const targetModeRef = useRef<ViewMode>('table');
   const currentModeRef = useRef<ViewMode>('table');
   const requestRef = useRef<number>(0);
-  const helixParamsRef = useRef({ R: 200, pitch: 5 });
+  const helixParamsRef = useRef({ R: 180, pitch: 8 });
 
 
   // Dimensions
@@ -348,7 +351,9 @@ export default function PeriodicTable() {
       <div
         className={cn(
           'relative w-full min-h-0 min-w-0 overflow-hidden border-none shadow-none outline-none ring-0',
-          activeMode === 'table' ? 'h-[750px] shrink-0' : 'min-h-0 flex-1 basis-0',
+          activeMode === 'table'
+            ? 'h-[750px] shrink-0'
+            : 'min-h-0 flex-1 basis-0 p-4 sm:p-6 md:p-8',
         )}
       >
         <div
