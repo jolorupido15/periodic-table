@@ -179,7 +179,7 @@ export default function PeriodicTable() {
   return (
     <div className="w-full flex flex-col items-center px-4 min-h-screen">
       {/* Header & Controls Container */}
-      <div className="sticky top-0 left-0 w-full pt-6 pb-2 flex flex-col items-center z-[1000] bg-zinc-950/90 backdrop-blur-xl shadow-2xl">
+      <div className="sticky top-0 left-0 w-full pt-6 pb-2 flex flex-col items-center z-[1000] bg-zinc-950/90 backdrop-blur-xl">
         <header className="flex flex-col items-center text-center mb-6">
           <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] mb-2">
             Periodic Table
