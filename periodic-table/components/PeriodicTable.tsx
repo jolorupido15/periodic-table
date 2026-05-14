@@ -83,7 +83,7 @@ export default function PeriodicTable() {
       // Helix Base (Double Strand)
       const strand = i < 59 ? 0 : 1;
       const idx = strand === 0 ? i : i - 59;
-      const helixAngle = (idx / 59) * Math.PI * 6 + (strand === 1 ? Math.PI : 0);
+      const helixAngle = (idx / 59) * Math.PI * 12 + (strand === 1 ? Math.PI : 0);
 
       // Centered Helix Math
       const centeredIdx = idx - 59 / 2;
@@ -137,9 +137,9 @@ export default function PeriodicTable() {
           }
           if (m === 'helix') {
             return {
-              x: Math.cos(helixAngle + rot) * 600,
+              x: Math.cos(helixAngle + rot) * 850,
               y: hy,
-              z: Math.sin(helixAngle + rot) * 600
+              z: Math.sin(helixAngle + rot) * 850
             };
           }
           return { x: 0, y: 0, z: 0 };
@@ -157,10 +157,10 @@ export default function PeriodicTable() {
           x3d = pos.x; y3d = pos.y; z3d = pos.z;
         }
 
-        const perspective = 3500 / (3500 + z3d + 600);
+        const perspective = 4500 / (4500 + z3d + 800);
         const x2d = x3d * perspective;
         const y2d = y3d * perspective;
-        const scale = perspective;
+        const scale = perspective * (viewMode === 'helix' ? 0.6 : 1);
         const opacity = viewMode === 'table' && !isTransitioning ? 1 : 0.4 + (z3d + 300) / 600 * 0.6;
 
         const card = cardRefs.current[i];
