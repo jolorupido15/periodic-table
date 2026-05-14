@@ -36,31 +36,34 @@ export default function ElementCard({ element, index, onClick, isSphereMode, sph
     <div
       onClick={() => onClick(element)}
       className={cn(
-        'relative flex flex-col items-center justify-center p-1.5 border transition-all duration-700 cursor-pointer rounded-sm group select-none hover:-translate-y-1',
-        'element-entrance',
-        !isSphereMode && 'animate-float',
+        'relative border transition-all duration-700 cursor-pointer rounded-sm group select-none hover:-translate-y-1 element-entrance',
         categoryColors[element.category],
         isSphereMode ? 'absolute w-16 h-20' : 'relative'
       )}
       style={isSphereMode ? { ...sphereStyle, animationDelay: `${index * 0.01}s` } : gridStyle}
     >
-      <span className="absolute top-0.5 left-1 text-[10px] font-medium opacity-70">
-        {element.number}
-      </span>
-      <span className="text-lg font-bold tracking-tight">
-        {element.symbol}
-      </span>
-      <span className="text-[9px] font-medium truncate w-full text-center mt-0.5 opacity-90 group-hover:scale-110 transition-transform">
-        {element.name}
-      </span>
-      <span className="text-[8px] opacity-60 mt-0.5">
-        {element.atomic_mass}
-      </span>
+      <div className={cn(
+        "w-full h-full flex flex-col items-center justify-center p-1.5",
+        !isSphereMode && "animate-float"
+      )}>
+        <span className="absolute top-0.5 left-1 text-[10px] font-medium opacity-70">
+          {element.number}
+        </span>
+        <span className="text-lg font-bold tracking-tight">
+          {element.symbol}
+        </span>
+        <span className="text-[9px] font-medium truncate w-full text-center mt-0.5 opacity-90 group-hover:scale-110 transition-transform">
+          {element.name}
+        </span>
+        <span className="text-[8px] opacity-60 mt-0.5">
+          {element.atomic_mass}
+        </span>
+      </div>
 
       <style jsx>{`
         .element-entrance {
           opacity: 0;
-          animation: fadeInSlide 0.6s ease-out forwards;
+          animation: fadeInSlide 0.8s ease-out forwards;
         }
         @keyframes fadeInSlide {
           from {
@@ -73,8 +76,8 @@ export default function ElementCard({ element, index, onClick, isSphereMode, sph
           }
         }
         .animate-float {
-          animation: float 6s ease-in-out infinite;
-          animation-delay: ${index * 0.1}s;
+          animation: float 6s ease-in-out infinite forwards;
+          animation-delay: ${index * 0.1 + 0.8}s; /* Start after entrance */
         }
         @keyframes float {
           0%, 100% { transform: translateY(0); }
